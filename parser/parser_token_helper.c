@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "../tokens/tokens.h"
 #include "../utils/utils.h"
@@ -28,46 +29,14 @@ Token* tokens_pop_expected(ParserContext* context, TokenStream* tokens, char* va
 Token* tokens_pop_identifier(ParserContext* context, TokenStream* tokens, char* stack_error_message)
 {
 	Token* token = tokens_pop(tokens);
+	if (token != NULL)
+	{
+		if (is_identifier(token->value))
+		{
+			return token;
+		}
+	}
 	
-	if (token == NULL)
-	{
-		parser_context_set_error(context, tokens->last, new_heap_string("Unexpected EOF"));
-		return NULL;
-	}
-	else
-	{
-		char* value = token->value;
-		int is_identifier = 1;
-		int i = 0;
-		char c;
-		while ((c = value[i++]) != '\0')
-		{
-			if ((c >= 'A' && c <= 'Z') ||
-				(c >= 'a' && c <= 'z') ||
-				(c >= '0' && c <= '9') ||
-				c == '_' ||
-				c == '$')
-			{
-				// This is fine.
-			}
-			else
-			{
-				is_identifier = 0;
-				break;
-			}
-		}
-		
-		if (is_identifier && value[0] < '0' || value[0] > '9')
-		{
-			is_identifier = 0;
-		}
-		
-		if (!is_identifier)
-		{
-			parser_context_set_error(context, token, string_concat4(stack_error_message, " Found: '", value, "'"));
-			return NULL;
-		}
-		
-		return token;
-	}
+	parser_context_set_error(context, tokens->last, new_heap_string("Unexpected EOF"));
+	return NULL;
 }

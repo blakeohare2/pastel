@@ -13,7 +13,10 @@ ParseNode* parse_expression(ParserContext* context, TokenStream* tokens)
 ParseNode* parse_atomic_entity(ParserContext* context, TokenStream* tokens)
 {
 	char* next = tokens_peek_value(tokens);
-	Token* token = tokens_peek(tokens);
+	
+	if (context->verbose) printf("Entity: %s\n", next);
+	
+	Token* token = tokens_pop(tokens);
 	char c;
 	ParseNode* expr = NULL;
 	if (next == NULL)
@@ -25,16 +28,20 @@ ParseNode* parse_atomic_entity(ParserContext* context, TokenStream* tokens)
 	
 	if (c == '"' || c== '\'')
 	{
+		if (context->verbose) printf("String\n");
+		
 		int string_length;
-		NodeStringConstant* string_const;
+		
 		expr = new_node_string_constant();
-		string_const = (NodeStringConstant*) expr->data;
+		NodeStringConstant* string_const = (NodeStringConstant*) expr->data;
 		expr->token = token;
 		string_const->value = parser_util_convert_string_token_to_value(context, token, &string_length);
 		string_const->length = string_length; // because the user string can contain \0's in it.
 	}
 	else if (c >= '0' && c <= '9')
 	{
+		if (context->verbose) printf("Number\n");
+		
 		if (string_starts_with(next, "0x"))
 		{
 			parser_context_set_error(context, token, new_heap_string("TODO: parse integer constant."));
@@ -50,10 +57,14 @@ ParseNode* parse_atomic_entity(ParserContext* context, TokenStream* tokens)
 	}
 	else if (string_equals(next, "null"))
 	{
+		if (context->verbose) printf("Null\n");
+		
 		parser_context_set_error(context, token, new_heap_string("TODO: null constant."));
 	}
 	else if (string_equals(next, "true") || string_equals(next, "false"))
 	{
+		if (context->verbose) printf("Boolean\n");
+		
 		parser_context_set_error(context, token, new_heap_string("TODO: boolean constant."));
 	}
 	else if (
@@ -62,6 +73,8 @@ ParseNode* parse_atomic_entity(ParserContext* context, TokenStream* tokens)
 		c == '$' || 
 		c == '_')
 	{
+		if (context->verbose) printf("Word\n");
+		
 		expr = new_node_variable();
 		((NodeVariable*) expr->data)->value = next;
 		expr->token = token;
@@ -77,14 +90,34 @@ ParseNode* parse_atomic_entity(ParserContext* context, TokenStream* tokens)
 	{
 		if (tokens_is_next(tokens, "("))
 		{
-			parser_context_set_error(context, token, new_heap_string("TODO: function invocation."));
+			if (context->verbose) printf("Function call\n");
+			
+			ParseNode* func_call_node = new_node_function_call();
+			NodeFunctionCall* func_call = (NodeFunctionCall*) func_call_node->data;
+			func_call->root = expr;
+			func_call_node->token = func_call->root->token;
+			func_call->open_paren_token = tokens_pop(tokens);
+			expr = func_call_node;
+			while (!tokens_pop_if_present(tokens, ")"))
+			{
+				if (func_call->arguments->length > 0)
+				{
+					tokens_pop_expected(context, tokens, ",");
+				}
+				list_add(func_call->arguments, parse_expression(context, tokens));
+				if (context->failed) { free_node(expr); return NULL; }
+			}
 		}
 		else if (tokens_is_next(tokens, "."))
 		{
+			if (context->verbose) printf("Dot field\n");
+		
 			parser_context_set_error(context, token, new_heap_string("TODO: dot field."));
 		}
 		else if (tokens_is_next(tokens, "["))
 		{
+			if (context->verbose) printf("Bracket index\n");
+		
 			parser_context_set_error(context, token, new_heap_string("TODO: bracket index/key."));
 		}
 		else
@@ -93,6 +126,7 @@ ParseNode* parse_atomic_entity(ParserContext* context, TokenStream* tokens)
 		}
 		if (context->failed) { free_node(expr); return NULL; }
 	}
+	if (context->verbose) printf("entity done\n");
 	
 	return expr;
 }
@@ -101,6 +135,8 @@ ParseNode* parse_parenthesis(ParserContext* context, TokenStream* tokens)
 {
 	if (tokens_is_next(tokens, "("))
 	{
+		if (context->verbose) printf("Parenthesis\n");
+		
 		ParseNode* node = parse_expression(context, tokens);
 		if (context->failed) { free_node(node); return NULL; }
 		
@@ -122,6 +158,8 @@ ParseNode* parse_binary_op_multiplication(ParserContext* context, TokenStream* t
 		tokens_is_next(tokens, "/") ||
 		tokens_is_next(tokens, "%"))
 	{
+		if (context->verbose) printf("Op: multiplication/division/modulo\n");
+		
 		ParseNode* node = new_node_binary_op();
 		NodeBinaryOp* binop = (NodeBinaryOp*) node->data;
 		list_add(binop->expressions, expr);
@@ -142,6 +180,8 @@ ParseNode* parse_binary_op_addition(ParserContext* context, TokenStream* tokens)
 	if (context->failed) return NULL;
 	if (tokens_is_next(tokens, "+") || tokens_is_next(tokens, "-"))
 	{
+		if (context->verbose) printf("Op: addition/subtraction\n");
+		
 		ParseNode* node = new_node_binary_op();
 		NodeBinaryOp* binop = (NodeBinaryOp*) node->data;
 		list_add(binop->expressions, (void*) expr);
@@ -156,6 +196,8 @@ ParseNode* parse_binary_op_addition(ParserContext* context, TokenStream* tokens)
 
 ParseNode* parse_for(ParserContext* context, TokenStream* tokens)
 {
+	if (context->verbose) printf("For Loop\n");
+	
 	ParseNode* node = new_node_for_loop();
 	NodeForLoop* node_for = (NodeForLoop*) node->data;
 	node->token = tokens_pop_expected(context, tokens, "for");
@@ -210,6 +252,8 @@ ParseNode* parse_for(ParserContext* context, TokenStream* tokens)
 
 ParseNode* parse_function_definition(ParserContext* context, TokenStream* tokens)
 {
+	if (context->verbose) printf("Function Definition\n");
+	
 	ParseNode* node = new_node_function_definition();
 	NodeFunctionDefinition* func_def = (NodeFunctionDefinition*) node->data;
 	
@@ -220,7 +264,7 @@ ParseNode* parse_function_definition(ParserContext* context, TokenStream* tokens
 	if (context->failed) { free_node(node); return NULL; }
 	
 	tokens_pop_expected(context, tokens, "(");
-	while (!tokens_is_next(tokens, ")"))
+	while (!tokens_pop_if_present(tokens, ")"))
 	{
 		if (func_def->arg_names->length > 0)
 		{
@@ -239,6 +283,8 @@ ParseNode* parse_function_definition(ParserContext* context, TokenStream* tokens
 	
 	func_def->code = parse_code_block(context, tokens, 1 /* brackets required */);
 	if (context->failed) { free_node(node); return NULL; }
+	
+	if (context->verbose) printf("Function definition done: %s\n", func_def->name_token->value);
 	
 	return node;
 }
@@ -275,21 +321,17 @@ ParseNode* parse_executable(
 	int only_allow_simple,
 	int semicolon_present)
 {
-	printf("parse executable...\n");
+	if (context->verbose) printf("parse executable...\n");
 	char* value = tokens_peek_value(tokens);
 	ParseNode* exec = NULL;
-	printf(" value is %s, is_root: %d\n", value, is_root);
 	if (is_root)
 	{
-		printf("root...\n");
 		if (string_equals(value, "struct") && context->translate_platform != NULL)
 		{
-			printf("struct...\n");
 			exec = parse_struct(context, tokens);
 		}
 		else if (string_equals(value, "function") && is_root)
 		{
-			printf("function...\n");
 			exec = parse_function_definition(context, tokens);
 		}
 		else if (string_equals(value, "class") && is_root)
@@ -304,6 +346,9 @@ ParseNode* parse_executable(
 		{
 			exec = parse_enum(context, tokens);
 		}
+		
+		if (context->failed) { free_node(exec); return NULL; }
+		if (exec != NULL) return exec;
 	}
 	
 	if (only_allow_simple == 0)
@@ -348,6 +393,12 @@ ParseNode* parse_executable(
 		{
 			exec = parse_constructor(context, tokens);
 		}
+	}
+	
+	if (context->failed) { free_node(exec); return NULL; }
+	if (exec != NULL)
+	{
+		return exec;
 	}
 	
 	if (exec == NULL)
@@ -485,12 +536,13 @@ ParseNode* parse_return(ParserContext* context, TokenStream* tokens)
 
 List* parse(ParserContext* context, TokenStream* tokens)
 {
-	printf("parse\n");
 	List* output = new_list();
 	while (tokens_has_more(tokens))
 	{
-		printf("parse line...\n");
 		list_add(output, parse_executable(context, tokens, 1 /* root */, 0 /* simple */, 1 /* semicolons required */));
+		if (context->failed) { free_node_list(output); return NULL; }
 	}
+	
+	if (context->verbose) printf("parsing done\n");
 	return output;
 }

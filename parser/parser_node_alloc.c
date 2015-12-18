@@ -47,6 +47,17 @@ ParseNode* new_node_for_loop()
 	return node;
 }
 
+ParseNode* new_node_function_call()
+{
+	ParseNode* node = new_node_generic(NODE_FUNCTION_CALL);
+	NodeFunctionCall* func_call = (NodeFunctionCall*) malloc(sizeof(NodeFunctionCall));
+	node->data = func_call;
+	func_call->root = NULL;
+	func_call->open_paren_token = NULL;
+	func_call->arguments = new_list();
+	return node;
+}
+
 ParseNode* new_node_function_definition()
 {
 	ParseNode* node = new_node_generic(NODE_FUNCTION_DEFINITION);
@@ -61,7 +72,7 @@ ParseNode* new_node_function_definition()
 
 ParseNode* new_node_string_constant()
 {
-	ParseNode* node = new_node_string_constant(NODE_STRING_CONSTANT);
+	ParseNode* node = new_node_generic(NODE_STRING_CONSTANT);
 	NodeStringConstant* sc = (NodeStringConstant*) malloc(sizeof(NodeStringConstant));
 	node->data = sc;
 	sc->value = NULL;
@@ -130,7 +141,7 @@ void free_node_function_call(ParseNode* node)
 {
 	NodeFunctionCall* fc = (NodeFunctionCall*) node->data;
 	free_node_list(fc->arguments);
-	free_node(fc->root);
+	if (fc->root != NULL) free_node(fc->root);
 	free(node);
 }
 

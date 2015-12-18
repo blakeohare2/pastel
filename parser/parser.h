@@ -7,6 +7,7 @@
 typedef struct ParserContext {
 	int is_compile;
 	int failed;
+	int verbose;
 	char* translate_platform;
 	char* code_language;
 	char* error; // ParserContext must free this.
@@ -81,6 +82,7 @@ typedef struct NodeForLoop {
 
 typedef struct NodeFunctionCall {
 	ParseNode* root;
+	Token* open_paren_token;
 	List* arguments; // List<ParseNode>
 } NodeFunctionCall;
 

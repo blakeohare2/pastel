@@ -11,6 +11,7 @@ ParserContext* new_parser_context(int is_compile, char* platform_name, char* cod
 	output->failed = 0;
 	output->is_compile = is_compile;
 	output->translate_platform = new_heap_string(platform_name);
+	output->verbose = 0;
 	
 	output->code_language = new_heap_string(code_language);
 	
