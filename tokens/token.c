@@ -3,7 +3,7 @@
 #include "tokens.h"
 #include "../utils/utils.h"
 
-Token* new_token(char* value, int col, int line)
+Token* new_token(int* value, int col, int line)
 {
 	Token* output = (Token*) malloc(sizeof(Token));
 	output->value = value;
@@ -15,6 +15,6 @@ Token* new_token(char* value, int col, int line)
 
 void free_token(Token* token)
 {
-	free(token->value);
+	free(token->value - 1);
 	free(token);
 }

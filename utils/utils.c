@@ -397,18 +397,14 @@ int string_contains_char(char* haystack, char needle)
 	return 0;
 }
 
-int is_identifier(char* value)
+int is_identifier(int* value)
 {
 	int i = 0;
-	char c;
-	do
+	int length = string_utf8_length(value);
+	int c;
+	for (i = 0; i < length; ++i)
 	{
-		c = value[i++];
-		if (c == '\0')
-		{
-			return i > 1;
-		}
-		
+		c = value[i];
 		if ((c >= 'A' && c <= 'Z') ||
 			(c >= 'a' && c <= 'z') ||
 			c == '_' || c == '$')
@@ -417,7 +413,7 @@ int is_identifier(char* value)
 		}
 		else if (c >= '0' && c <= '9')
 		{
-			if (i == 1)
+			if (i == 0)
 			{
 				return 0;
 			}
@@ -426,9 +422,9 @@ int is_identifier(char* value)
 		{
 			return 0;
 		}
-	} while (c != '\0');
+	}
 	
-	return 0;
+	return 1;
 }
 
 int string_hash(char* value)
@@ -443,21 +439,3 @@ int string_hash(char* value)
 	return output;
 }
 
-char* string_concat2(char* s1, char* s2) { string_concat6(s1, s2, "", "", "", ""); }
-char* string_concat3(char* s1, char* s2, char* s3) { string_concat6(s1, s2, s3, "", "", ""); }
-char* string_concat4(char* s1, char* s2, char* s3, char* s4) { string_concat6(s1, s2, s3, s4, "", ""); }
-char* string_concat5(char* s1, char* s2, char* s3, char* s4, char* s5)  { string_concat6(s1, s2, s3, s4, s5, ""); }
-char* string_concat6(char* s1, char* s2, char* s3, char* s4, char* s5, char* s6)
-{
-	StringBuilder* sb = new_string_builder();
-	char* output;
-	string_builder_append_chars(sb, s1);
-	string_builder_append_chars(sb, s2);
-	if (s3[0] != '\0') string_builder_append_chars(sb, s3);
-	if (s4[0] != '\0') string_builder_append_chars(sb, s4);
-	if (s5[0] != '\0') string_builder_append_chars(sb, s5);
-	if (s6[0] != '\0') string_builder_append_chars(sb, s6);
-	output = string_builder_to_string(sb);
-	free_string_builder(sb);
-	return output;
-}

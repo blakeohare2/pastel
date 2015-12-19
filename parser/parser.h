@@ -10,13 +10,14 @@ typedef struct ParserContext {
 	int verbose;
 	char* translate_platform;
 	char* code_language;
-	char* error; // ParserContext must free this.
+	int* error; // ParserContext must free this.
 	Token* error_token;
 	MapStringInt* op_assignment_lookup;
 } ParserContext;
 
 ParserContext* new_parser_context(int is_compile, char* platform_name, char* code_language);
-void parser_context_set_error(ParserContext* context, Token* token, char* heap_string);
+void parser_context_set_error(ParserContext* context, Token* token, int* heap_string);
+void parser_context_set_error_chars(ParserContext* context, Token* token, char* chars);
 void free_parser_context(ParserContext* parser_context);
 
 enum OP {
@@ -102,12 +103,12 @@ typedef struct NodeReturn {
 } NodeReturn;
 
 typedef struct NodeStringConstant {
-	char* value;
+	int* value;
 	int length; // because value can contain \0's in it.
 } NodeStringConstant;
 
 typedef struct NodeVariable {
-	char* value;
+	int* value;
 } NodeVariable;
 
 ParseNode* new_node_assignment();
@@ -152,7 +153,6 @@ ParseNode* parse_try(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_variable(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_while_loop(ParserContext* context, TokenStream* tokens);
 
-
 void free_node(ParseNode* node);
 
 void free_node_assignment(ParseNode* node);
@@ -171,9 +171,10 @@ List* parse(ParserContext* context, TokenStream* tokens);
 
 void free_node_list(List* nodes);
 
-Token* tokens_pop_expected(ParserContext* context, TokenStream* tokens, char* value);
+Token* tokens_pop_expected_chars(ParserContext* context, TokenStream* tokens, char* value);
 Token* tokens_pop_identifier(ParserContext* context, TokenStream* tokens, char* stack_error_message);
 
-char* parser_util_convert_string_token_to_value(ParserContext* context, Token* token, int* length_out);
+int* parser_util_convert_string_token_to_value(ParserContext* context, Token* token);
+void parser_context_print_error(ParserContext* context);
 
 #endif
