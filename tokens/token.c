@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "tokens.h"
 #include "../utils/utils.h"
@@ -15,6 +16,6 @@ Token* new_token(int* value, int col, int line)
 
 void free_token(Token* token)
 {
-	free(token->value - 1);
+	free_utf8_string(token->value);
 	free(token);
 }

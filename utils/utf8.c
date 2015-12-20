@@ -333,7 +333,7 @@ int* new_string_utf8_c1(int c1)
 	int* output = malloc(sizeof(int) * 2);
 	output[0] = 1;
 	output[1] = c1;
-	return output;
+	return output + 1;
 }
 
 int* new_string_utf8_c2(int c1, int c2)
@@ -342,7 +342,7 @@ int* new_string_utf8_c2(int c1, int c2)
 	output[0] = 2;
 	output[1] = c1;
 	output[2] = c2;
-	return output;
+	return output + 1;
 }
 
 int* new_string_utf8_c3(int c1, int c2, int c3)
@@ -352,7 +352,7 @@ int* new_string_utf8_c3(int c1, int c2, int c3)
 	output[1] = c1;
 	output[2] = c2;
 	output[3] = c3;
-	return output;
+	return output + 1;
 }
 
 int* new_heap_string_utf8(int* stack_string)
