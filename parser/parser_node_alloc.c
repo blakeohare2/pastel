@@ -71,19 +71,48 @@ ParseNode* new_node_function_definition()
 	return node;
 }
 
+ParseNode* new_node_null_coalescer()
+{
+	ParseNode* node = new_node_generic(NODE_NULL_COALESCER);
+	NodeNullCoalescer* nc = (NodeNullCoalescer*) malloc(sizeof(NodeNullCoalescer));
+	node->data = nc;
+	nc->primary_expression = NULL;
+	nc->secondary_expression = NULL;
+	return node;
+}
+
 ParseNode* new_node_string_constant()
 {
 	ParseNode* node = new_node_generic(NODE_STRING_CONSTANT);
 	NodeStringConstant* sc = (NodeStringConstant*) malloc(sizeof(NodeStringConstant));
 	node->data = sc;
 	sc->value = NULL;
-	sc->length = -1;
+	return node;
+}
+
+ParseNode* new_node_ternary()
+{
+	ParseNode* node = new_node_generic(NODE_TERNARY);
+	NodeTernary* t = (NodeTernary*) malloc(sizeof(NodeTernary));
+	node->data = t;
+	t->condition = NULL;
+	t->true_expression = NULL;
+	t->false_expression = NULL;
 	return node;
 }
 
 ParseNode* new_node_variable()
 {
 	ParseNode* node = new_node_generic(NODE_VARIABLE);
+	NodeVariable* v = (NodeVariable*) malloc(sizeof(NodeVariable));
+	node->data = v;
+	v->value = NULL;
+	return node;
+}
+
+ParseNode* new_node_while_loop()
+{
+	ParseNode* node = new_node_generic(NODE_WHILE_LOOP);
 	NodeVariable* v = (NodeVariable*) malloc(sizeof(NodeVariable));
 	node->data = v;
 	v->value = NULL;
@@ -104,7 +133,9 @@ void free_node(ParseNode* node)
 		case NODE_NULL_CONSTANT: free_node_null_constant(node); break;
 		case NODE_RETURN: free_node_return(node); break;
 		case NODE_STRING_CONSTANT: free_node_string_constant(node); break;
+		case NODE_TERNARY: free_node_ternary(node); break;
 		case NODE_VARIABLE: free_node_variable(node); break;
+		case NODE_WHILE_LOOP: free_node_while_loop(node); break;
 		default: break;
 	}
 }
@@ -180,6 +211,15 @@ void free_node_list(List* nodes)
 	}
 }
 
+void free_node_null_coalescer(ParseNode* node)
+{
+	NodeNullCoalescer* nc = (NodeNullCoalescer*) node->data;
+	free_node(nc->primary_expression);
+	free_node(nc->secondary_expression);
+	free(nc);
+	free(node);
+}
+
 void free_node_null_constant(ParseNode* node)
 {
 	// null constant has no data value.
@@ -197,8 +237,18 @@ void free_node_return(ParseNode* node)
 void free_node_string_constant(ParseNode* node)
 {
 	NodeStringConstant* sc = (NodeStringConstant*) node->data;
-	if (sc->value != NULL) free(sc->value);
+	if (sc->value != NULL) free_utf8_string(sc->value);
 	free(sc);
+	free(node);
+}
+
+void free_node_ternary(ParseNode* node)
+{
+	NodeTernary* t = (NodeTernary*) node->data;
+	free_node(t->condition);
+	free_node(t->true_expression);
+	free_node(t->false_expression);
+	free(t);
 	free(node);
 }
 
@@ -207,5 +257,14 @@ void free_node_variable(ParseNode* node)
 	NodeVariable* v = (NodeVariable*) node->data;
 	if (v->value != NULL) free(v->value);
 	free(v);
+	free(node);
+}
+
+void free_node_while_loop(ParseNode* node)
+{
+	NodeWhileLoop* w = (NodeWhileLoop*) node->data;
+	if (w->condition != NULL) free_node(w->condition);
+	free_node_list(w->code);
+	free(w);
 	free(node);
 }

@@ -49,10 +49,13 @@ enum {
 	NODE_FUNCTION_CALL = 40,
 	NODE_FUNCTION_DEFINITION = 50,
 	NODE_INTEGER_CONSTANT = 60,
+	NODE_NULL_COALESCER = 64,
 	NODE_NULL_CONSTANT = 65,
 	NODE_RETURN = 70,
 	NODE_STRING_CONSTANT = 80,
-	NODE_VARIABLE = 90
+	NODE_TERNARY = 85,
+	NODE_VARIABLE = 90,
+	NODE_WHILE_LOOP = 100
 };
 
 typedef struct ParseNode {
@@ -98,18 +101,33 @@ typedef struct NodeIntegerConstant {
 	int value;
 } NodeIntegerConstant;
 
+typedef struct NodeNullCoalescer {
+	ParseNode* primary_expression;
+	ParseNode* secondary_expression;
+} NodeNullCoalescer;
+
 typedef struct NodeReturn {
 	ParseNode* value;
 } NodeReturn;
 
 typedef struct NodeStringConstant {
 	int* value;
-	int length; // because value can contain \0's in it.
 } NodeStringConstant;
+
+typedef struct NodeTernary {
+	ParseNode* condition;
+	ParseNode* true_expression;
+	ParseNode* false_expression;
+} NodeTernary;
 
 typedef struct NodeVariable {
 	int* value;
 } NodeVariable;
+
+typedef struct NodeWhileLoop {
+	ParseNode* condition;
+	List* code;
+} NodeWhileLoop;
 
 ParseNode* new_node_assignment();
 ParseNode* new_node_binary_op();
@@ -117,20 +135,23 @@ ParseNode* new_node_for_loop();
 ParseNode* new_node_function_call();
 ParseNode* new_node_function_definition();
 ParseNode* new_node_integer_constant();
+ParseNode* new_node_null_coalescer();
 ParseNode* new_node_null_constant();
 ParseNode* new_node_return();
 ParseNode* new_node_string_constant();
+ParseNode* new_node_ternary();
 ParseNode* new_node_variable();
-
+ParseNode* new_node_while_loop();
 
 ParseNode* parse_executable(ParserContext* context, TokenStream* tokens, int is_root, int only_simple_allowed, int semicolon_required);
 ParseNode* parse_expression(ParserContext* context, TokenStream* tokens);
 List* parse_code_block(ParserContext* context, TokenStream* tokens, int brackets_required);
 
+// All other parse_expression functions are private.
+ParseNode* parse_expression(ParserContext* context, TokenStream* tokens);
+
+// Executable parser
 ParseNode* parse_assignment(ParserContext* context, TokenStream* tokens);
-ParseNode* parse_binary_op(ParserContext* context, TokenStream* tokens);
-ParseNode* parse_binary_op_addition(ParserContext* context, TokenStream* tokens);
-ParseNode* parse_binary_op_multiplication(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_break(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_class_definition(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_const(ParserContext* context, TokenStream* tokens);
@@ -143,14 +164,9 @@ ParseNode* parse_function_call(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_function_definition(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_if(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_import(ParserContext* context, TokenStream* tokens);
-ParseNode* parse_integer_constant(ParserContext* context, TokenStream* tokens);
-ParseNode* parse_null_constant(ParserContext* context, TokenStream* tokens);
-ParseNode* parse_parenthesis(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_return(ParserContext* context, TokenStream* tokens);
-ParseNode* parse_string_constnat(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_struct(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_try(ParserContext* context, TokenStream* tokens);
-ParseNode* parse_variable(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_while_loop(ParserContext* context, TokenStream* tokens);
 
 void free_node(ParseNode* node);
@@ -161,10 +177,13 @@ void free_node_for_loop(ParseNode* node);
 void free_node_function_call(ParseNode* node);
 void free_node_function_definition(ParseNode* node);
 void free_node_integer_constant(ParseNode* node);
+void free_node_null_coalescer(ParseNode* node);
 void free_node_null_constant(ParseNode* node);
 void free_node_return(ParseNode* node);
 void free_node_string_constant(ParseNode* node);
+void free_node_ternary(ParseNode* node);
 void free_node_variable(ParseNode* node);
+void free_node_while_loop(ParseNode* node);
 
 // List of executable nodes.
 List* parse(ParserContext* context, TokenStream* tokens);
