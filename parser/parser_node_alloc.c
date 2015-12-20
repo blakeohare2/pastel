@@ -18,7 +18,7 @@ ParseNode* new_node_assignment()
 {
 	ParseNode* node = new_node_generic(NODE_ASSIGNMENT);
 	NodeAssignment* data = (NodeAssignment*) malloc(sizeof(NodeAssignment));
-	node->data = (void*) data;
+	node->data = data;
 	data->target = NULL;
 	data->value = NULL;
 	data->op = OP_EQUALS;
@@ -29,7 +29,17 @@ ParseNode* new_node_binary_op()
 {
 	ParseNode* node = new_node_generic(NODE_BINARY_OP);
 	NodeBinaryOp* data = (NodeBinaryOp*) malloc(sizeof(NodeBinaryOp));
-	node->data = (void*) data;
+	node->data = data;
+	data->expressions = new_list();
+	data->op_tokens = new_list();
+	return node;
+}
+
+ParseNode* new_node_boolean_combination()
+{
+	ParseNode* node = new_node_generic(NODE_BOOLEAN_COMBINATION);
+	NodeBooleanCombination* data = (NodeBooleanCombination*) malloc(sizeof(NodeBooleanCombination));
+	node->data = data;
 	data->expressions = new_list();
 	data->op_tokens = new_list();
 	return node;
@@ -155,6 +165,15 @@ void free_node_binary_op(ParseNode* node)
 	free_node_list(binop->expressions);
 	free_list(binop->op_tokens);
 	free(binop);
+	free(node);
+}
+
+void free_node_boolean_combination(ParseNode* node)
+{
+	NodeBooleanCombination* bc = (NodeBooleanCombination*) node->data;
+	free_node_list(bc->expressions);
+	free_node_list(bc->op_tokens);
+	free(bc);
 	free(node);
 }
 

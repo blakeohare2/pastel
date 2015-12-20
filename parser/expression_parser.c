@@ -91,8 +91,25 @@ ParseNode* parse_null_coalescer(ParserContext* context, TokenStream* tokens)
 
 ParseNode* parse_boolean_combination(ParserContext* context, TokenStream* tokens)
 {
-	// TODO: this (as a loop)
-	return parse_bitwise_op(context, tokens);
+	ParseNode* node = parse_bitwise_op(context, tokens);
+	if (context->failed) { free_node(node); return NULL; }
+	
+	if (tokens_is_next_chars(tokens, "&&") || tokens_is_next_chars(tokens, "||"))
+	{
+		ParseNode* bc_node = new_node_boolean_combination();
+		NodeBooleanCombination* bc = (NodeBooleanCombination*) bc_node->data;
+		list_add(bc->expressions, node);
+		node = bc_node;
+		
+		while (tokens_is_next_chars(tokens, "&&") || tokens_is_next_chars(tokens, "||"))
+		{
+			list_add(bc->op_tokens, tokens_pop(tokens));
+			list_add(bc->expressions, parse_bitwise_op(context, tokens));
+			if (context->failed) { free_node(node); return NULL; }
+		}
+	}
+	
+	return node;
 }
 
 ParseNode* parse_bitwise_op(ParserContext* context, TokenStream* tokens)
