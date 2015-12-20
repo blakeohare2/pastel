@@ -98,4 +98,8 @@ int string_utf8_contains_char(int* haystack, char needle);
 int string_utf8_length(int* str);
 int* chars_to_utf8(char* binary_data);
 
+
+void print_string_utf8(int* str);
+void println_string_utf8(int* str);
+
 #endif

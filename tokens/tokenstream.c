@@ -23,7 +23,7 @@ TokenStream* tokenize(FileContents* file_contents)
 	int* raw_string = file_contents->text_data;
 	int length = file_contents->text_length;
 	int* file_name = file_contents->file_name;
-	int i;
+	int i;	
 	int token_start;
 	int c;
 	int c_t;

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "utils.h"
 
@@ -25,6 +26,10 @@ int* create_utf8_string(char* binary_data, int length)
 	int utf8_length = 0;
 	int valid_char = -1;
 	int char_size = 0;
+	
+	char temp[2];
+	temp[1] = '\0';
+	
 	while (i < length)
 	{
 		utf8_length++;
@@ -32,11 +37,12 @@ int* create_utf8_string(char* binary_data, int length)
 		if (c < 128)
 		{
 			output[i] = c;
+			temp[0] = c;
 		}
 		else
 		{
 			valid_char = -1;
-			
+			temp[0] = c;
 			if ((c & 0xC0) == 0xC0) // 2 byte marker
 			{
 				if (i < length - 1 && 
@@ -128,7 +134,7 @@ int* create_utf8_string(char* binary_data, int length)
 	
 	int* copied_output = malloc(sizeof(int) * (utf8_length + 1));
 	copied_output[0] = utf8_length;
-	memcpy(copied_output + 1, output, utf8_length);
+	memcpy(copied_output + 1, output, sizeof(int) * utf8_length);
 	free(output);
 	return copied_output + 1;
 }
@@ -222,7 +228,7 @@ void ensure_capacity(StringBuilderUtf8* sb, int capacity)
 		new_capacity = new_capacity * 2 + 1;
 	}
 	int* new_chars = malloc(sizeof(int) * new_capacity);
-	memcpy(new_chars, sb->characters, sb->length);
+	memcpy(new_chars, sb->characters, sizeof(int) * sb->length);
 	free(sb->characters);
 	sb->characters = new_chars;
 	sb->capacity = new_capacity;
@@ -260,7 +266,7 @@ int* string_builder_utf8_to_string(StringBuilderUtf8* sb)
 	int* output = malloc(sizeof(int) * (length + 1));
 	output[0] = length;
 	output = output + 1;
-	memcpy(output, sb->characters, length);
+	memcpy(output, sb->characters, sizeof(int) * length);
 	return output;
 }
 
@@ -353,7 +359,7 @@ int* new_heap_string_utf8(int* stack_string)
 {
 	int length = stack_string[-1];
 	int* output = malloc(sizeof(int) * (length + 1));
-	memcpy(output, stack_string - 1, length + 1);
+	memcpy(output, stack_string - 1, sizeof(int) * (length + 1));
 	return output + 1;
 }
 
@@ -392,7 +398,7 @@ int* string_utf8_copy(int* original)
 {
 	int length = string_utf8_length(original);
 	int* output = malloc(sizeof(int) * (length + 1));
-	memcpy(output + 1, original, length);
+	memcpy(output + 1, original, sizeof(int) * length);
 	output[0] = length;
 	return output + 1;
 }
@@ -417,4 +423,25 @@ int string_utf8_contains_char(int* haystack, char needle)
 		if (haystack[i--] == needle) return 1;
 	}
 	return 0;
+}
+
+void print_string_utf8(int* str)
+{
+	char text[2];
+	text[1] = '\0';
+	int i;
+	int t;
+	int length = string_utf8_length(str);
+	for (i = 0; i < length; ++i)
+	{
+		t = str[i];
+		text[0] = t < 128 ? t : '?';
+		printf("%s", text);
+	}
+}
+
+void println_string_utf8(int* str)
+{
+	print_string_utf8(str);
+	printf("\n");
 }
