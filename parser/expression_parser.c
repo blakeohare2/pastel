@@ -114,40 +114,117 @@ ParseNode* parse_boolean_combination(ParserContext* context, TokenStream* tokens
 
 ParseNode* parse_bitwise_op(ParserContext* context, TokenStream* tokens)
 {
-	// TODO: this (recurse)
-	return parse_equality(context, tokens);
+	ParseNode* node = parse_equality(context, tokens);
+	if (context->failed) { free_node(node); return NULL; }
+	
+	if (tokens_is_next_chars(tokens, "&") ||
+		tokens_is_next_chars(tokens, "|") ||
+		tokens_is_next_chars(tokens, "^"))
+	{
+		if (context->verbose) printf("Op: bitwise operators\n");
+		
+		ParseNode* binop_node = new_node_binary_op();
+		NodeBinaryOp* binop = (NodeBinaryOp*) node->data;
+		list_add(binop->expressions, node);
+		node = binop_node;
+		
+		while (tokens_is_next_chars(tokens, "&") ||
+			tokens_is_next_chars(tokens, "|") ||
+			tokens_is_next_chars(tokens, "^"))
+		{
+			list_add(binop->op_tokens, tokens_pop(tokens));
+			list_add(binop->expressions, parse_equality(context, tokens));
+			if (context->failed) { free_node(node); return NULL; }
+		}
+	}
+	return node;
 }
 
 ParseNode* parse_equality(ParserContext* context, TokenStream* tokens)
 {
-	// TODO: this (do not repeat)
-	return parse_inequality(context, tokens);
+	ParseNode* node = parse_inequality(context, tokens);
+	if (context->failed) { free_node(node); return NULL; }
+	
+	if (tokens_is_next_chars(tokens, "==") ||
+		tokens_is_next_chars(tokens, "!="))
+	{
+		if (context->verbose) printf("Op: equality operators\n");
+		
+		ParseNode* binop_node = new_node_binary_op();
+		NodeBinaryOp* binop = (NodeBinaryOp*) node->data;
+		list_add(binop->expressions, node);
+		node = binop_node;
+		list_add(binop->op_tokens, tokens_pop(tokens));
+		list_add(binop->expressions, parse_inequality(context, tokens));
+		if (context->failed) { free_node(node); return NULL; }
+	}
+	return node;
 }
 
 ParseNode* parse_inequality(ParserContext* context, TokenStream* tokens)
 {
-	// TODO: this (do not repeat)
-	return parse_bitshift(context, tokens);
+	ParseNode* node = parse_bitshift(context, tokens);
+	if (context->failed) { free_node(node); return NULL; }
+	
+	if (tokens_is_next_chars(tokens, "<=") ||
+		tokens_is_next_chars(tokens, ">=") ||
+		tokens_is_next_chars(tokens, "<") ||
+		tokens_is_next_chars(tokens, ">"))
+	{
+		if (context->verbose) printf("Op: equality operators\n");
+		
+		ParseNode* binop_node = new_node_binary_op();
+		NodeBinaryOp* binop = (NodeBinaryOp*) node->data;
+		list_add(binop->expressions, node);
+		node = binop_node;
+		list_add(binop->op_tokens, tokens_pop(tokens));
+		list_add(binop->expressions, parse_bitshift(context, tokens));
+		if (context->failed) { free_node(node); return NULL; }
+	}
+	return node;
 }
 
 ParseNode* parse_bitshift(ParserContext* context, TokenStream* tokens)
 {
-	// TODO: this (recurse)
-	return parse_addition(context, tokens);
+	ParseNode* node = parse_addition(context, tokens);
+	if (context->failed) { free_node(node); return NULL; }
+	
+	if (tokens_is_next_chars(tokens, "<<") ||
+		tokens_is_next_chars(tokens, ">>"))
+	{
+		if (context->verbose) printf("Op: bitshift\n");
+		
+		ParseNode* binop_node = new_node_binary_op();
+		NodeBinaryOp* binop = (NodeBinaryOp*) node->data;
+		list_add(binop->expressions, node);
+		node = binop_node;
+		
+		while (tokens_is_next_chars(tokens, "<<") ||
+			tokens_is_next_chars(tokens, ">>"))
+		{
+			list_add(binop->op_tokens, tokens_pop(tokens));
+			list_add(binop->expressions, parse_addition(context, tokens));
+			if (context->failed) { free_node(node); return NULL; }
+		}
+	}
+	return node;
 }
 
 ParseNode* parse_addition(ParserContext* context, TokenStream* tokens)
 {
 	ParseNode* expr = parse_multiplication(context, tokens);
 	if (context->failed) return NULL;
-	if (tokens_is_next_chars(tokens, "+") || tokens_is_next_chars(tokens, "-"))
+	
+	if (tokens_is_next_chars(tokens, "+") ||
+		tokens_is_next_chars(tokens, "-"))
 	{
 		if (context->verbose) printf("Op: addition/subtraction\n");
 		
 		ParseNode* node = new_node_binary_op();
 		NodeBinaryOp* binop = (NodeBinaryOp*) node->data;
 		list_add(binop->expressions, (void*) expr);
-		while (tokens_is_next_chars(tokens, "+") || tokens_is_next_chars(tokens, "-"))
+		while (tokens_is_next_chars(tokens, "+") ||
+			tokens_is_next_chars(tokens, "-"))
 		{
 			list_add(binop->op_tokens, tokens_pop(tokens));
 			list_add(binop->expressions, parse_multiplication(context, tokens));
@@ -170,7 +247,9 @@ ParseNode* parse_multiplication(ParserContext* context, TokenStream* tokens)
 		ParseNode* node = new_node_binary_op();
 		NodeBinaryOp* binop = (NodeBinaryOp*) node->data;
 		list_add(binop->expressions, expr);
-		while (tokens_is_next_chars(tokens, "*") || tokens_is_next_chars(tokens, "/") || tokens_is_next_chars(tokens, "%"))
+		while (tokens_is_next_chars(tokens, "*") ||
+			tokens_is_next_chars(tokens, "/") ||
+			tokens_is_next_chars(tokens, "%"))
 		{
 			list_add(binop->op_tokens, tokens_pop(tokens));
 			list_add(binop->expressions, parse_parenthesis(context, tokens));
@@ -183,7 +262,17 @@ ParseNode* parse_multiplication(ParserContext* context, TokenStream* tokens)
 
 ParseNode* parse_negate(ParserContext* context, TokenStream* tokens)
 {
-	// TODO: this (recurse)
+	if (tokens_is_next_chars(tokens, "-") || tokens_is_next_chars(tokens, "!"))
+	{
+		Token* negate_token = tokens_pop(tokens);
+		ParseNode* root = parse_negate(context, tokens);
+		if (context->failed) { free_node(root); return NULL; }
+		ParseNode* negate_node = new_node_negate();
+		negate_node->token = negate_token;
+		NodeNegate* negate = (NodeNegate*) negate_node->data;
+		negate->expression = root;
+		return negate_node;
+	}
 	return parse_exponents(context, tokens);
 }
 

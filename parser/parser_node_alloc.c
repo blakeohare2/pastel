@@ -81,6 +81,15 @@ ParseNode* new_node_function_definition()
 	return node;
 }
 
+ParseNode* new_node_negate()
+{
+	ParseNode* node = new_node_generic(NODE_NEGATE);
+	NodeNegate* n = (NodeNegate*) malloc(sizeof(NodeNegate));
+	node->data = n;
+	n->expression = NULL;
+	return node;
+}
+
 ParseNode* new_node_null_coalescer()
 {
 	ParseNode* node = new_node_generic(NODE_NULL_COALESCER);
@@ -228,6 +237,14 @@ void free_node_list(List* nodes)
 		}
 		free_list(nodes);
 	}
+}
+
+void free_node_negate(ParseNode* node)
+{
+	NodeNegate* n = (NodeNegate*) node->data;
+	free_node(n->expression);
+	free(n);
+	free(node);
 }
 
 void free_node_null_coalescer(ParseNode* node)

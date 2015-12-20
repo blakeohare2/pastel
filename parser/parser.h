@@ -50,6 +50,7 @@ enum {
 	NODE_FUNCTION_CALL = 40,
 	NODE_FUNCTION_DEFINITION = 50,
 	NODE_INTEGER_CONSTANT = 60,
+	NODE_NEGATE = 62,
 	NODE_NULL_COALESCER = 64,
 	NODE_NULL_CONSTANT = 65,
 	NODE_RETURN = 70,
@@ -107,6 +108,10 @@ typedef struct NodeIntegerConstant {
 	int value;
 } NodeIntegerConstant;
 
+typedef struct NodeNegate {
+	ParseNode* expression;
+} NodeNegate;
+
 typedef struct NodeNullCoalescer {
 	ParseNode* primary_expression;
 	ParseNode* secondary_expression;
@@ -142,6 +147,7 @@ ParseNode* new_node_for_loop();
 ParseNode* new_node_function_call();
 ParseNode* new_node_function_definition();
 ParseNode* new_node_integer_constant();
+ParseNode* new_node_negate();
 ParseNode* new_node_null_coalescer();
 ParseNode* new_node_null_constant();
 ParseNode* new_node_return();
@@ -185,6 +191,7 @@ void free_node_for_loop(ParseNode* node);
 void free_node_function_call(ParseNode* node);
 void free_node_function_definition(ParseNode* node);
 void free_node_integer_constant(ParseNode* node);
+void free_node_negate(ParseNode* node);
 void free_node_null_coalescer(ParseNode* node);
 void free_node_null_constant(ParseNode* node);
 void free_node_return(ParseNode* node);
