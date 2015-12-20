@@ -20,7 +20,8 @@ ParseNode* parse_negate(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_exponents(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_increment(ParserContext* context, TokenStream* tokens);
 ParseNode* parse_parenthesis(ParserContext* context, TokenStream* tokens);
-ParseNode* parse_atomic_entity(ParserContext* context, TokenStream* tokens);
+ParseNode* parse_entity(ParserContext* context, TokenStream* tokens);
+ParseNode* parse_entity_suffix(ParseNode* root, ParserContext* context, TokenStream* tokens);
 
 //////////////////////////////////////
 
@@ -171,10 +172,10 @@ ParseNode* parse_inequality(ParserContext* context, TokenStream* tokens)
 		tokens_is_next_chars(tokens, "<") ||
 		tokens_is_next_chars(tokens, ">"))
 	{
-		if (context->verbose) printf("Op: equality operators\n");
+		if (context->verbose) printf("Op: inequality operators\n");
 		
 		ParseNode* binop_node = new_node_binary_op();
-		NodeBinaryOp* binop = (NodeBinaryOp*) node->data;
+		NodeBinaryOp* binop = (NodeBinaryOp*) binop_node->data;
 		list_add(binop->expressions, node);
 		node = binop_node;
 		list_add(binop->op_tokens, tokens_pop(tokens));
@@ -235,7 +236,7 @@ ParseNode* parse_addition(ParserContext* context, TokenStream* tokens)
 
 ParseNode* parse_multiplication(ParserContext* context, TokenStream* tokens)
 {
-	ParseNode* expr = parse_parenthesis(context, tokens);
+	ParseNode* expr = parse_negate(context, tokens);
 	if (context->failed) { free_node(expr); return NULL; }
 	
 	if (tokens_is_next_chars(tokens, "*") ||
@@ -252,7 +253,7 @@ ParseNode* parse_multiplication(ParserContext* context, TokenStream* tokens)
 			tokens_is_next_chars(tokens, "%"))
 		{
 			list_add(binop->op_tokens, tokens_pop(tokens));
-			list_add(binop->expressions, parse_parenthesis(context, tokens));
+			list_add(binop->expressions, parse_negate(context, tokens));
 			if (context->failed) { free_node(node); return NULL; }
 		}
 		expr = node;
@@ -264,6 +265,8 @@ ParseNode* parse_negate(ParserContext* context, TokenStream* tokens)
 {
 	if (tokens_is_next_chars(tokens, "-") || tokens_is_next_chars(tokens, "!"))
 	{
+		if (context->verbose) printf("Unary negation\n");
+		
 		Token* negate_token = tokens_pop(tokens);
 		ParseNode* root = parse_negate(context, tokens);
 		if (context->failed) { free_node(root); return NULL; }
@@ -278,36 +281,85 @@ ParseNode* parse_negate(ParserContext* context, TokenStream* tokens)
 
 ParseNode* parse_exponents(ParserContext* context, TokenStream* tokens)
 {
-	// TODO: this (recurse)
-	return parse_increment(context, tokens);
+	ParseNode* expr = parse_increment(context, tokens);
+	if (context->failed) { free_node(expr); return NULL; }
+	
+	if (tokens_is_next_chars(tokens, "**"))
+	{
+		if (context->verbose) printf("Op: exponents\n");
+		
+		ParseNode* node = new_node_binary_op();
+		NodeBinaryOp* binop = (NodeBinaryOp*) node->data;
+		list_add(binop->expressions, expr);
+		while (tokens_is_next_chars(tokens, "**"))
+		{
+			list_add(binop->op_tokens, tokens_pop(tokens));
+			list_add(binop->expressions, parse_increment(context, tokens));
+			if (context->failed) { free_node(node); return NULL; }
+		}
+		expr = node;
+	}
+	return expr;
 }
 
 ParseNode* parse_increment(ParserContext* context, TokenStream* tokens)
 {
-	// TODO: this
-	return parse_parenthesis(context, tokens);
+	ParseNode* node = NULL;
+	if (tokens_is_next_chars(tokens, "++") || tokens_is_next_chars(tokens, "--"))
+	{
+		Token* increment_token = tokens_pop(tokens);
+		ParseNode* root = parse_entity(context, tokens);
+		if (context->failed) { free_node(root); return NULL; }
+		
+		node = new_node_increment();
+		node->token = increment_token;
+		NodeIncrement* inc = (NodeIncrement*) node->data;
+		inc->increment_token = increment_token;
+		inc->expression = root;
+		inc->is_prefix = 1;
+	}
+	else
+	{
+		node = parse_entity(context, tokens);
+		if (context->failed) { free_node(node); return NULL; }
+		
+		if (tokens_is_next_chars(tokens, "++") || tokens_is_next_chars(tokens, "--"))
+		{
+			ParseNode* inc_node = new_node_increment();
+			node->token = node->token;
+			NodeIncrement* inc = (NodeIncrement*) inc_node->data;
+			inc->expression = node;
+			inc->increment_token = tokens_pop(tokens);
+			inc->is_prefix = 0;
+			node = inc_node;
+		}
+	}
+	return node;
 }
 
 ParseNode* parse_parenthesis(ParserContext* context, TokenStream* tokens)
 {
-	if (tokens_is_next_chars(tokens, "("))
-	{
-		if (context->verbose) printf("Parenthesis\n");
-		
-		ParseNode* node = parse_expression(context, tokens);
-		if (context->failed) { free_node(node); return NULL; }
-		
-		tokens_pop_expected_chars(context, tokens, ")");
-		if (context->failed) { free_node(node); return NULL; }
-		
-		return node;
-	}
+	if (context->verbose) printf("Parenthesis\n");
 	
-	return parse_atomic_entity(context, tokens);
+	tokens_pop_expected_chars(context, tokens, "(");
+	if (context->failed) return NULL;
+	
+	ParseNode* node = parse_expression(context, tokens);
+	if (context->failed) { free_node(node); return NULL; }
+	
+	tokens_pop_expected_chars(context, tokens, ")");
+	if (context->failed) { free_node(node); return NULL; }
+	
+	return node;
 }
 
-ParseNode* parse_atomic_entity(ParserContext* context, TokenStream* tokens)
+ParseNode* parse_entity(ParserContext* context, TokenStream* tokens)
 {
+	if (tokens_is_next_chars(tokens, "("))
+	{
+		return parse_parenthesis(context, tokens);
+	}
+	
 	int* next = tokens_peek_value(tokens);
 	
 	if (context->verbose) printf("Entity: %s\n", next);
@@ -347,7 +399,26 @@ ParseNode* parse_atomic_entity(ParserContext* context, TokenStream* tokens)
 		}
 		else
 		{
-			parser_context_set_error_chars(context, token, "TODO: parse integer constant.");
+			int int_value = 0; // TODO: long long?
+			int i;
+			int token_length = string_utf8_length(token->value);
+			for (i = 0; i < token_length; ++i)
+			{
+				c = next[i];
+				if (c >= '0' && c <= '9')
+				{
+					int_value = int_value * 10 + (c - '0');
+				}
+				else
+				{
+					parser_context_set_error_chars(context, token, "Invalid variable name or number.");
+					return NULL;
+				}
+			}
+			expr = new_node_integer_constant();
+			NodeIntegerConstant* ic = (NodeIntegerConstant*) expr->data;
+			ic->value = int_value;
+			expr->token = token;
 		}
 	}
 	else if (c == 'n' && string_utf8_equals_chars(next, "null"))
@@ -387,6 +458,11 @@ ParseNode* parse_atomic_entity(ParserContext* context, TokenStream* tokens)
 	
 	if (context->failed) { free_node(expr); return NULL; }
 	
+	return parse_entity_suffix(expr, context, tokens);
+}
+
+ParseNode* parse_entity_suffix(ParseNode* root, ParserContext* context, TokenStream* tokens)
+{
 	while (1)
 	{
 		if (tokens_is_next_chars(tokens, "("))
@@ -395,10 +471,10 @@ ParseNode* parse_atomic_entity(ParserContext* context, TokenStream* tokens)
 			
 			ParseNode* func_call_node = new_node_function_call();
 			NodeFunctionCall* func_call = (NodeFunctionCall*) func_call_node->data;
-			func_call->root = expr;
+			func_call->root = root;
 			func_call_node->token = func_call->root->token;
 			func_call->open_paren_token = tokens_pop(tokens);
-			expr = func_call_node;
+			root = func_call_node;
 			while (!tokens_pop_if_present_chars(tokens, ")"))
 			{
 				if (func_call->arguments->length > 0)
@@ -406,28 +482,28 @@ ParseNode* parse_atomic_entity(ParserContext* context, TokenStream* tokens)
 					tokens_pop_expected_chars(context, tokens, ",");
 				}
 				list_add(func_call->arguments, parse_expression(context, tokens));
-				if (context->failed) { free_node(expr); return NULL; }
+				if (context->failed) { free_node(root); return NULL; }
 			}
 		}
 		else if (tokens_is_next_chars(tokens, "."))
 		{
 			if (context->verbose) printf("Dot field\n");
 		
-			parser_context_set_error_chars(context, token, "TODO: dot field.");
+			parser_context_set_error_chars(context, tokens_peek(tokens), "TODO: dot field.");
 		}
 		else if (tokens_is_next_chars(tokens, "["))
 		{
 			if (context->verbose) printf("Bracket index\n");
 		
-			parser_context_set_error_chars(context, token, "TODO: bracket index/key.");
+			parser_context_set_error_chars(context, tokens_peek(tokens), "TODO: bracket index/key.");
 		}
 		else
 		{
 			break;
 		}
-		if (context->failed) { free_node(expr); return NULL; }
+		if (context->failed) { free_node(root); return NULL; }
 	}
 	if (context->verbose) printf("entity done\n");
 	
-	return expr;
+	return root;
 }

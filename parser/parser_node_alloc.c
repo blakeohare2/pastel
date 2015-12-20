@@ -69,6 +69,16 @@ ParseNode* new_node_function_call()
 	return node;
 }
 
+ParseNode* new_node_increment()
+{
+	ParseNode* node = new_node_increment(NODE_INCREMENT);
+	NodeIncrement* inc = (NodeIncrement*) node->data;
+	inc->expression = NULL;
+	inc->increment_token = NULL;
+	inc->is_prefix = 0;
+	return node;
+}
+
 ParseNode* new_node_function_definition()
 {
 	ParseNode* node = new_node_generic(NODE_FUNCTION_DEFINITION);
@@ -78,6 +88,15 @@ ParseNode* new_node_function_definition()
 	data->arg_names = new_list();
 	data->arg_values = new_list();
 	data->code = NULL;
+	return node;
+}
+
+ParseNode* new_node_integer_constant()
+{
+	ParseNode* node = new_node_generic(NODE_INTEGER_CONSTANT);
+	NodeIntegerConstant* data = (NodeIntegerConstant*) malloc(sizeof(NodeIntegerConstant));
+	node->data = data;
+	data->value = 0;
 	return node;
 }
 
@@ -148,6 +167,7 @@ void free_node(ParseNode* node)
 		case NODE_FOR_LOOP: free_node_for_loop(node); break;
 		case NODE_FUNCTION_CALL: free_node_function_call(node); break;
 		case NODE_FUNCTION_DEFINITION: free_node_function_definition(node); break;
+		case NODE_INCREMENT: free_node_increment(node); break;
 		case NODE_INTEGER_CONSTANT: free_node_integer_constant(node); break;
 		case NODE_NULL_CONSTANT: free_node_null_constant(node); break;
 		case NODE_RETURN: free_node_return(node); break;
@@ -212,6 +232,14 @@ void free_node_function_definition(ParseNode* node)
 	free_node_list(func->arg_values);
 	free_node_list(func->code);
 	free(func);
+	free(node);
+}
+
+void free_node_increment(ParseNode* node)
+{
+	NodeIncrement* inc = (NodeIncrement*) node->data;
+	free_node(inc->expression);
+	free(inc);
 	free(node);
 }
 
