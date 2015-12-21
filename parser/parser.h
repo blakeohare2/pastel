@@ -12,7 +12,7 @@ typedef struct ParserContext {
 	char* code_language;
 	int* error; // ParserContext must free this.
 	Token* error_token;
-	MapStringInt* op_assignment_lookup;
+	Map* op_assignment_lookup;
 } ParserContext;
 
 ParserContext* new_parser_context(int is_compile, char* platform_name, char* code_language);

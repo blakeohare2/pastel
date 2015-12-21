@@ -97,6 +97,8 @@ ParseNode* parse_boolean_combination(ParserContext* context, TokenStream* tokens
 	
 	if (tokens_is_next_chars(tokens, "&&") || tokens_is_next_chars(tokens, "||"))
 	{
+		if (context->verbose) printf("Boolean combination\n");
+		
 		ParseNode* bc_node = new_node_boolean_combination();
 		NodeBooleanCombination* bc = (NodeBooleanCombination*) bc_node->data;
 		list_add(bc->expressions, node);
@@ -458,6 +460,8 @@ ParseNode* parse_entity(ParserContext* context, TokenStream* tokens)
 	
 	if (context->failed) { free_node(expr); return NULL; }
 	
+	if (context->verbose) printf("entity done\n");
+	
 	return parse_entity_suffix(expr, context, tokens);
 }
 
@@ -503,7 +507,6 @@ ParseNode* parse_entity_suffix(ParseNode* root, ParserContext* context, TokenStr
 		}
 		if (context->failed) { free_node(root); return NULL; }
 	}
-	if (context->verbose) printf("entity done\n");
 	
 	return root;
 }

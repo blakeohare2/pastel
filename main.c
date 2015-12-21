@@ -11,7 +11,7 @@ int main(int argc, char** argv)
 	TokenStream* tokens = tokenize(sample_file);
 	
 	ParserContext* parser_context = new_parser_context(0, "python", "en");
-	parser_context->verbose = 1;
+	parser_context->verbose = 0;
 	
 	printf("parsing...\n");
 	List* executables = parse(parser_context, tokens);

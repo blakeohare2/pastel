@@ -180,138 +180,6 @@ void free_string_builder(StringBuilder* sb)
 	free(sb);
 }
 
-// MAP STRING TO INT
-
-MapStringInt* new_map_string_int()
-{
-	return new_map_string_int_with_capacity(16);
-}
-
-MapStringInt* new_map_string_int_with_capacity(int capacity)
-{
-	int i;
-	
-	MapStringInt* output = (MapStringInt*) malloc(sizeof(MapStringInt));
-	output->size = 0;
-	if (capacity < 1) capacity = 8;
-	output->capacity = capacity;
-	output->buckets = (ListInt**) malloc(sizeof(ListInt*) * capacity);
-	for (i = capacity - 1; i >= 0; --i)
-	{
-		output->buckets[i] = NULL;
-	}
-	return output;
-}
-
-void map_rehash(MapStringInt* map)
-{
-	// meh. I'll do this at some point.
-}
-
-// TODO: this is potentially prone to memory leaks in the event of an overwrite.
-void map_string_int_put(MapStringInt* map, char* key, int value)
-{
-	int hash = string_hash(key);
-	int bucket_id = hash % map->capacity;
-	if (bucket_id < 0) bucket_id += map->capacity;
-	ListInt* bucket = map->buckets[bucket_id];
-	if (bucket == NULL)
-	{
-		bucket = new_list_int();
-		map->buckets[bucket_id] = bucket;
-	}
-	
-	int found = 0;
-	int i;
-	int bl = bucket->length;
-	
-	for (i = 0; i < bl; i += 2)
-	{
-		if (string_equals((char*) bucket->items[i], key))
-		{
-			bucket->items[i + 1] = value;
-			found = 1;
-			break;
-		}
-	}
-	
-	if (found == 0)
-	{
-		list_int_add(bucket, (int) key);
-		list_int_add(bucket, value);
-		map->size++;
-	}
-	
-	if (map->size > map->capacity * 2)
-	{
-		map_rehash(map);
-	}
-}
-
-int map_string_int_get(MapStringInt* map, char* key, int default_value)
-{
-	int hash_code = string_hash(key);
-	List* bucket = (List*) map->buckets[hash_code % map->capacity];
-	if (bucket != NULL)
-	{
-		int length = bucket->length;
-		int i;
-		for (i = length - 1; i >= 0; i -= 2)
-		{
-			if (string_equals(key, (char*) bucket->items[i]))
-			{
-				return (int) bucket->items[i + 1];
-			}
-		}
-	}
-	return default_value;
-}
-
-void* map_string_ptr_get(MapStringInt* map, char* key)
-{
-	return (void*) map_string_int_get(map, key, (int) NULL);
-}
-
-int map_string_int_contains(MapStringInt* map, char* key)
-{
-	List* bucket = (List*) map->buckets[string_hash(key) % map->capacity];
-	if (bucket != NULL)
-	{
-		int length = bucket->length;
-		int i;
-		for (i = length - 1; i >= 0; i -= 2)
-		{
-			if (string_equals(key, (char*) bucket->items[i]))
-			{
-				return 1;
-			}
-		}
-	}
-	return 0;
-}
-
-void free_map_string_int(MapStringInt* map, int free_keys)
-{
-	int i = map->capacity;
-	while (--i >= 0)
-	{
-		List* bucket = (List*) map->buckets[i];
-		if (bucket != NULL)
-		{
-			if (free_keys)
-			{
-				int j;
-				for (j = 0; j < bucket->length; j += 2)
-				{
-					free((char*) bucket->items[j]);
-				}
-			}
-			free(bucket);
-		}
-	}
-	free(map);
-}
-
 // STRING
 
 char* new_string_c1(char c1)
@@ -427,14 +295,14 @@ int is_identifier(int* value)
 	return 1;
 }
 
-int string_hash(char* value)
+int string_utf8_hash(int* value)
 {
 	int output = 0;
-	int i = 0;
-	char c;
-	while (value[i] != '\0')
+	int length = string_utf8_length(value);
+	int i;
+	for (i = 0; i < length; ++i)
 	{
-		output = (output << 19) - output + value[i++];
+		output = (output << 19) - output + value[i];
 	}
 	return output;
 }

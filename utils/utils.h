@@ -60,19 +60,18 @@ int* new_string_utf8_c2(int c1, int c2);
 int* new_string_utf8_c3(int c1, int c2, int c3);
 int* new_heap_string_utf8(int* stack_string);
 
-typedef struct MapStringInt {
+typedef struct Map {
 	int size;
 	int capacity;
 	ListInt** buckets; // List<int>[]: individual bucket lists have even length. 2n is the char*, 2n + 1 is the int value. cast.
-} MapStringInt;
+} Map;
 
-MapStringInt* new_map_string_int();
-MapStringInt* new_map_string_int_with_capacity(int capacity);
-void map_string_int_put(MapStringInt* map, char* key, int value);
-int map_string_int_get(MapStringInt* map, char* key, int default_value);
-void* map_string_ptr_get(MapStringInt* map, char* key);
-int map_string_int_contains(MapStringInt* map, char* key);
-void free_map_string_int(MapStringInt* map, int free_keys);
+Map* new_map();
+Map* new_map_with_capacity(int capacity);
+void map_put(Map* map, int* key, int value);
+int map_get(Map* map, int* key, int default_value);
+int map_contains(Map* map, int* key);
+void free_map_string_int(Map* map, int free_keys);
 
 int string_equals(char* s1, char* s2);
 int string_starts_with(char* haystack, char* needle);
@@ -94,10 +93,10 @@ int string_utf8_equals(int* s1, int* s2);
 int string_utf8_equals_chars(int* str, char* chars);
 int string_utf8_starts_with(int* haystack, char* needle);
 int string_utf8_contains_char(int* haystack, char needle);
+int string_utf8_hash(int* value);
 
 int string_utf8_length(int* str);
 int* chars_to_utf8(char* binary_data);
-
 
 void print_string_utf8(int* str);
 void println_string_utf8(int* str);
