@@ -52,10 +52,9 @@ TokenStream* tokenize(FileContents* file_contents)
 		}
 	}
 	
-	i = 0;
-	do
+	for (i = 0; i <= length; ++i)
 	{
-		c = raw_string[i];
+		c = i < length ? raw_string[i] : 0;
 		switch (mode)
 		{
 			case MODE_NONE:
@@ -91,57 +90,60 @@ TokenStream* tokenize(FileContents* file_contents)
 						break;
 						
 					default:
-						switch ((c << 8) | raw_string[i + 1])
+						if (c < 128)
 						{
-							case ('+' << 8) | '+': // ++
-							case ('-' << 8) | '-': // --
-							case ('?' << 8) | '?': // ??
-							case ('+' << 8) | '=': // +=
-							case ('-' << 8) | '=': // -=
-							case ('*' << 8) | '=': // *=
-							case ('/' << 8) | '=': // /=
-							case ('%' << 8) | '=': // %=
-							case ('&' << 8) | '=': // &=
-							case ('|' << 8) | '=': // |=
-							case ('^' << 8) | '=': // ^=
-							case ('=' << 8) | '=': // ==
-							case ('!' << 8) | '=': // !=
-							case ('<' << 8) | '=': // <=
-							case ('>' << 8) | '=': // >=
-								list_add(tokens, new_token(
-									new_string_utf8_c2(c, raw_string[i + 1]),
-									columns[i],
-									lines[i]));
-								i++;
-								handled = 1;
-								break;
-							
-							case ('&' << 8) | '&': // && and &&=
-							case ('|' << 8) | '|': // || and ||=
-							case ('*' << 8) | '*': // ** and **=
-							case ('<' << 8) | '<': // << and <<=
-							case ('>' << 8) | '>': // >> and >>=
-								if (raw_string[i + 2] == '=')
-								{
-									list_add(tokens, new_token(
-										new_string_utf8_c3(c, raw_string[i + 1], '='),
-										columns[i],
-										lines[i]));
-									i += 2;
-								}
-								else
-								{
+							switch ((c << 8) | raw_string[i + 1])
+							{
+								case ('+' << 8) | '+': // ++
+								case ('-' << 8) | '-': // --
+								case ('?' << 8) | '?': // ??
+								case ('+' << 8) | '=': // +=
+								case ('-' << 8) | '=': // -=
+								case ('*' << 8) | '=': // *=
+								case ('/' << 8) | '=': // /=
+								case ('%' << 8) | '=': // %=
+								case ('&' << 8) | '=': // &=
+								case ('|' << 8) | '=': // |=
+								case ('^' << 8) | '=': // ^=
+								case ('=' << 8) | '=': // ==
+								case ('!' << 8) | '=': // !=
+								case ('<' << 8) | '=': // <=
+								case ('>' << 8) | '=': // >=
 									list_add(tokens, new_token(
 										new_string_utf8_c2(c, raw_string[i + 1]),
 										columns[i],
 										lines[i]));
 									i++;
-								}
-								handled = 1;
-								break;
+									handled = 1;
+									break;
 								
-							default:
-								break;
+								case ('&' << 8) | '&': // && and &&=
+								case ('|' << 8) | '|': // || and ||=
+								case ('*' << 8) | '*': // ** and **=
+								case ('<' << 8) | '<': // << and <<=
+								case ('>' << 8) | '>': // >> and >>=
+									if (raw_string[i + 2] == '=')
+									{
+										list_add(tokens, new_token(
+											new_string_utf8_c3(c, raw_string[i + 1], '='),
+											columns[i],
+											lines[i]));
+										i += 2;
+									}
+									else
+									{
+										list_add(tokens, new_token(
+											new_string_utf8_c2(c, raw_string[i + 1]),
+											columns[i],
+											lines[i]));
+										i++;
+									}
+									handled = 1;
+									break;
+									
+								default:
+									break;
+							}
 						}
 						break;
 				}
@@ -168,7 +170,6 @@ TokenStream* tokenize(FileContents* file_contents)
 				
 			case MODE_STRING:
 				string_builder_utf8_append_char(token_builder, c);
-				
 				if (c == mode_type)
 				{
 					mode = MODE_NONE;
@@ -223,11 +224,11 @@ TokenStream* tokenize(FileContents* file_contents)
 					string_builder_utf8_reset(token_builder);
 				}
 				break;
+				
 			default:
 				break;
 		}
-		++i;
-	} while (c != '\0');
+	}
 
 	free(token_builder);
 	free(lines);
