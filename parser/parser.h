@@ -51,6 +51,7 @@ enum {
 	NODE_FOR_LOOP = 30,
 	NODE_FUNCTION_CALL = 40,
 	NODE_FUNCTION_DEFINITION = 50,
+	NODE_IF = 53,
 	NODE_INCREMENT = 55,
 	NODE_INTEGER_CONSTANT = 60,
 	NODE_NEGATE = 62,
@@ -117,6 +118,12 @@ typedef struct NodeFunctionDefinition {
 	List* code; // List<ParseNode>
 } NodeFunctionDefinition;
 
+typedef struct NodeIf {
+	ParseNode* condition;
+	List* true_code;
+	List* false_code;
+} NodeIf;
+
 typedef struct NodeIncrement {
 	Token* increment_token;
 	ParseNode* expression;
@@ -167,6 +174,7 @@ ParseNode* new_node_float_constant();
 ParseNode* new_node_for_loop();
 ParseNode* new_node_function_call();
 ParseNode* new_node_function_definition();
+ParseNode* new_node_if();
 ParseNode* new_node_increment();
 ParseNode* new_node_integer_constant();
 ParseNode* new_node_negate();
@@ -214,6 +222,7 @@ void free_node_float_constant(ParseNode* node);
 void free_node_for_loop(ParseNode* node);
 void free_node_function_call(ParseNode* node);
 void free_node_function_definition(ParseNode* node);
+void free_node_if(ParseNode* node);
 void free_node_increment(ParseNode* node);
 void free_node_integer_constant(ParseNode* node);
 void free_node_negate(ParseNode* node);

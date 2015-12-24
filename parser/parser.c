@@ -169,6 +169,10 @@ ParseNode* parse_executable(
 		{
 			exec = parse_for(context, tokens);
 		}
+		else if (string_utf8_equals_chars(value, "if"))
+		{
+			exec = parse_if(context, tokens);
+		}
 		else if (string_utf8_equals_chars(value, "while"))
 		{
 			exec = parse_while_loop(context, tokens);
@@ -310,8 +314,39 @@ ParseNode* parse_try(ParserContext* context, TokenStream* tokens)
 
 ParseNode* parse_if(ParserContext* context, TokenStream* tokens)
 {
-	parser_context_set_error_chars(context, tokens_peek(tokens), "TODO: parse_if");
-	return NULL;
+	Token* if_token = tokens_pop_expected_chars(context, tokens, "if");
+	if (context->failed) return NULL;
+	
+	ParseNode* node = new_node_if();
+	node->token = if_token;
+	NodeIf* if_node = (NodeIf*) node->data;
+	
+	tokens_pop_expected_chars(context, tokens, "(");
+	if (context->failed) { free_node(node); return NULL; }
+	
+	if_node->condition = parse_expression(context, tokens);
+	if (context->failed) { free_node(node); return NULL; }
+	
+	tokens_pop_expected_chars(context, tokens, ")");
+	if (context->failed) { free_node(node); return NULL; }
+	
+	if_node->true_code = parse_code_block(context, tokens, 0);
+	if (context->failed) { free_node(node); return NULL; }
+	
+	if (tokens_is_next_chars(tokens, "elseif"))
+	{
+		parser_context_set_error_chars(context, tokens_pop(tokens), "There should be a space between if and else.");
+		free_node(node);
+		return NULL;
+	}
+	
+	if (tokens_pop_if_present_chars(tokens, "else"))
+	{
+		if_node->false_code = parse_code_block(context, tokens, 0);
+		if (context->failed) { free_node(node); return NULL; }
+	}
+	
+	return node;
 }
 
 ParseNode* parse_do_while_loop(ParserContext* context, TokenStream* tokens)

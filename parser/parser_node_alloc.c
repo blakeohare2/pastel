@@ -89,6 +89,17 @@ ParseNode* new_node_function_call()
 	return node;
 }
 
+ParseNode* new_node_if()
+{
+	ParseNode* node = new_node_generic(NODE_IF);
+	NodeIf* if_node = (NodeIf*) malloc(sizeof(NodeIf));
+	node->data = if_node;
+	if_node->condition = NULL;
+	if_node->true_code = NULL;
+	if_node->false_code = NULL;
+	return node;
+}
+
 ParseNode* new_node_increment()
 {
 	ParseNode* node = new_node_generic(NODE_INCREMENT);
@@ -198,6 +209,7 @@ void free_node(ParseNode* node)
 		case NODE_FOR_LOOP: free_node_for_loop(node); break;
 		case NODE_FUNCTION_CALL: free_node_function_call(node); break;
 		case NODE_FUNCTION_DEFINITION: free_node_function_definition(node); break;
+		case NODE_IF: free_node_if(node); break;
 		case NODE_INCREMENT: free_node_increment(node); break;
 		case NODE_INTEGER_CONSTANT: free_node_integer_constant(node); break;
 		case NODE_NULL_CONSTANT: free_node_null_constant(node); break;
@@ -277,6 +289,16 @@ void free_node_function_definition(ParseNode* node)
 	free_node_list(func->arg_values);
 	free_node_list(func->code);
 	free(func);
+	free(node);
+}
+
+void free_node_if(ParseNode* node)
+{
+	NodeIf* if_node = (NodeIf*) node->data;
+	free_node(if_node->condition);
+	free_node_list(if_node->true_code);
+	free_node_list(if_node->false_code);
+	free(if_node);
 	free(node);
 }
 
