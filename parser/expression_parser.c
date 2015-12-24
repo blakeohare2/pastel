@@ -216,7 +216,7 @@ ParseNode* parse_bitshift(ParserContext* context, TokenStream* tokens)
 ParseNode* parse_addition(ParserContext* context, TokenStream* tokens)
 {
 	ParseNode* expr = parse_multiplication(context, tokens);
-	if (context->failed) return NULL;
+	if (context->failed) { free(expr); return NULL; }
 	
 	if (tokens_is_next_chars(tokens, "+") ||
 		tokens_is_next_chars(tokens, "-"))
@@ -404,7 +404,48 @@ ParseNode* parse_entity(ParserContext* context, TokenStream* tokens)
 		}
 		else if (string_utf8_contains_char(next, '.'))
 		{
-			parser_context_set_error_chars(context, token, "TODO: parse float constant.");
+			int i;
+			int token_length = string_utf8_length(token->value);
+			int decimal_found = 0;
+			double value = 0;
+			int denominator = 0;
+			int numerator = 0;
+			for (i = 0; i < token_length; ++i)
+			{
+				c = next[i];
+				if (c == '.')
+				{
+					if (decimal_found)
+					{
+						parser_context_set_error_chars(context, token, "Invalid value.");
+						return NULL;
+					}
+					else
+					{
+						decimal_found = 1;
+					}
+				}
+				else if (c >= '0' && c <= '9')
+				{
+					numerator = numerator * 10 + (c - '0');
+					if (decimal_found)
+					{
+						denominator++;
+					}
+				}
+				else
+				{
+					parser_context_set_error_chars(context, token, "Invalid value.");
+					return NULL;
+				}
+			}
+			value = 1.0 * numerator / denominator; // TODO: I may store this in exponential form to preserve accuracy. 
+			expr = new_node_float_constant();
+			NodeFloatConstant* fc = (NodeFloatConstant*) expr->data;
+			fc->numerator = numerator;
+			fc->denominator = denominator;
+			fc->is_positive = 1;
+			if (context->verbose) printf("Float constant: %f\n", (fc->is_positive ? 1.0 : -1.0) * fc->numerator / math_pow_int(10, fc->denominator));
 		}
 		else
 		{
@@ -444,11 +485,15 @@ ParseNode* parse_entity(ParserContext* context, TokenStream* tokens)
 		
 		parser_context_set_error_chars(context, token, "TODO: constructor invocation.");
 	}
-	else if (string_utf8_equals_chars(next, "true") || string_utf8_equals_chars(next, "false"))
+	else if (
+		(c == 't' || c == 'f') &&
+		(string_utf8_equals_chars(next, "true") || string_utf8_equals_chars(next, "false")))
 	{
 		if (context->verbose) printf("Boolean\n");
 		
-		parser_context_set_error_chars(context, token, "TODO: boolean constant.");
+		expr = new_node_boolean_constant();
+		expr->token = token;
+		((NodeBooleanConstant*) expr->data)->value = c == 't';
 	}
 	else if (
 		(c >= 'a' && c <= 'z') ||
@@ -461,7 +506,7 @@ ParseNode* parse_entity(ParserContext* context, TokenStream* tokens)
 		expr = new_node_variable();
 		expr->token = token;
 		NodeVariable* v = (NodeVariable*) expr->data;
-		v->value = next;
+		v->value = string_utf8_copy(next);
 	}
 	else
 	{

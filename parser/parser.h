@@ -46,6 +46,8 @@ enum {
 	NODE_ASSIGNMENT = 10,
 	NODE_BINARY_OP = 20,
 	NODE_BOOLEAN_COMBINATION = 25,
+	NODE_BOOLEAN_CONSTANT = 26,
+	NODE_FLOAT_CONSTANT = 28,
 	NODE_FOR_LOOP = 30,
 	NODE_FUNCTION_CALL = 40,
 	NODE_FUNCTION_DEFINITION = 50,
@@ -83,6 +85,16 @@ typedef struct NodeBooleanCombination {
 	List* expressions;
 	List* op_tokens;
 } NodeBooleanCombination;
+
+typedef struct NodeBooleanConstant {
+	int value;
+} NodeBooleanConstant;
+
+typedef struct NodeFloatConstant {
+	int numerator;
+	int denominator; // 10 to the power of this
+	int is_positive;
+} NodeFloatConstant;
 
 typedef struct NodeForLoop {
 	Token* for_token;
@@ -150,6 +162,8 @@ typedef struct NodeWhileLoop {
 ParseNode* new_node_assignment();
 ParseNode* new_node_binary_op();
 ParseNode* new_node_boolean_combination();
+ParseNode* new_node_boolean_constant();
+ParseNode* new_node_float_constant();
 ParseNode* new_node_for_loop();
 ParseNode* new_node_function_call();
 ParseNode* new_node_function_definition();
@@ -193,8 +207,10 @@ ParseNode* parse_while_loop(ParserContext* context, TokenStream* tokens);
 void free_node(ParseNode* node);
 
 void free_node_assignment(ParseNode* node);
-void free_node_binary_op();
-void free_node_boolean_combination();
+void free_node_binary_op(ParseNode* node);
+void free_node_boolean_combination(ParseNode* node);
+void free_node_boolean_constant(ParseNode* node);
+void free_node_float_constant(ParseNode* node);
 void free_node_for_loop(ParseNode* node);
 void free_node_function_call(ParseNode* node);
 void free_node_function_definition(ParseNode* node);

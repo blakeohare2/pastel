@@ -339,7 +339,7 @@ ParseNode* parse_while_loop(ParserContext* context, TokenStream* tokens)
 	while_loop->code = parse_code_block(context, tokens, 0);
 	if (context->failed) { free_node(node); return NULL; }
 	
-	printf("While end\n");
+	if (context->verbose) printf("While end\n");
 	return node;
 }
 

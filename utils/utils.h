@@ -101,4 +101,6 @@ int* chars_to_utf8(char* binary_data);
 void print_string_utf8(int* str);
 void println_string_utf8(int* str);
 
+int math_pow_int(int base, int exp);
+
 #endif

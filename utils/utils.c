@@ -307,3 +307,12 @@ int string_utf8_hash(int* value)
 	return output;
 }
 
+int math_pow_int(int base, int exp)
+{
+	int output = 1;
+	while (exp-- > 0)
+	{
+		output *= base;
+	}
+	return output;
+}

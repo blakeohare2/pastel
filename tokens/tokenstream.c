@@ -88,7 +88,22 @@ TokenStream* tokenize(FileContents* file_contents)
 							handled = 1;
 						}
 						break;
-						
+					
+					case '.':
+						c_t = raw_string[i + 1];
+						if (c_t >= '0' && c_t <= '9')
+						{
+							// floats that begin with the decimal instead of a number.
+							handled = 1;
+							mode = MODE_WORD;
+							string_builder_utf8_reset(token_builder);
+							string_builder_utf8_append_char(token_builder, '.');
+							string_builder_utf8_append_char(token_builder, c_t);
+							token_start = i;
+							++i;
+						}
+						break;
+					
 					default:
 						if (c < 128)
 						{
@@ -209,6 +224,11 @@ TokenStream* tokenize(FileContents* file_contents)
 					c == '_' ||
 					c == '$')
 				{
+					string_builder_utf8_append_char(token_builder, c);
+				}
+				else if (c == '.' && token_builder->characters[0] >= '0' && token_builder->characters[0] <= '9')
+				{
+					// Allow the decimal if the first character is a digit.
 					string_builder_utf8_append_char(token_builder, c);
 				}
 				else

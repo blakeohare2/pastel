@@ -44,7 +44,7 @@ void free_parser_context(ParserContext* parser_context)
 {
 	free(parser_context->translate_platform);
 	free(parser_context->code_language);
-	if (parser_context->error != NULL) free(parser_context->error);
+	if (parser_context->error != NULL) free_utf8_string(parser_context->error);
 	free_map(parser_context->op_assignment_lookup, 1);
 	free(parser_context);
 }

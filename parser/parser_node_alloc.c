@@ -45,6 +45,26 @@ ParseNode* new_node_boolean_combination()
 	return node;
 }
 
+ParseNode* new_node_boolean_constant()
+{
+	ParseNode* node = new_node_generic(NODE_BOOLEAN_CONSTANT);
+	NodeBooleanConstant* data = (NodeBooleanConstant*) malloc(sizeof(NodeBooleanConstant));
+	node->data = data;
+	data->value = 0;
+	return node;
+}
+
+ParseNode* new_node_float_constant()
+{
+	ParseNode* node = new_node_generic(NODE_FLOAT_CONSTANT);
+	NodeFloatConstant* data = (NodeFloatConstant*) malloc(sizeof(NodeFloatConstant));
+	node->data = data;
+	data->numerator = 0;
+	data->denominator = 0;
+	data->is_positive = 0;
+	return node;
+}
+
 ParseNode* new_node_for_loop()
 {
 	ParseNode* node = new_node_generic(NODE_FOR_LOOP);
@@ -172,6 +192,9 @@ void free_node(ParseNode* node)
 	{
 		case NODE_ASSIGNMENT: free_node_assignment(node); break;
 		case NODE_BINARY_OP: free_node_binary_op(node); break;
+		case NODE_BOOLEAN_COMBINATION: free_node_boolean_combination(node); break;
+		case NODE_BOOLEAN_CONSTANT: free_node_boolean_constant(node); break;
+		case NODE_FLOAT_CONSTANT: free_node_float_constant(node); break;
 		case NODE_FOR_LOOP: free_node_for_loop(node); break;
 		case NODE_FUNCTION_CALL: free_node_function_call(node); break;
 		case NODE_FUNCTION_DEFINITION: free_node_function_definition(node); break;
@@ -183,7 +206,9 @@ void free_node(ParseNode* node)
 		case NODE_TERNARY: free_node_ternary(node); break;
 		case NODE_VARIABLE: free_node_variable(node); break;
 		case NODE_WHILE_LOOP: free_node_while_loop(node); break;
-		default: break;
+		default:
+			printf("No free routine for type %d\n", node->type);
+			break;
 	}
 }
 
@@ -209,8 +234,20 @@ void free_node_boolean_combination(ParseNode* node)
 {
 	NodeBooleanCombination* bc = (NodeBooleanCombination*) node->data;
 	free_node_list(bc->expressions);
-	free_node_list(bc->op_tokens);
+	free_list(bc->op_tokens);
 	free(bc);
+	free(node);
+}
+
+void free_node_boolean_constant(ParseNode* node)
+{
+	free(node->data);
+	free(node);
+}
+
+void free_node_float_constant(ParseNode* node)
+{
+	free(node->data);
 	free(node);
 }
 
@@ -327,7 +364,7 @@ void free_node_ternary(ParseNode* node)
 void free_node_variable(ParseNode* node)
 {
 	NodeVariable* v = (NodeVariable*) node->data;
-	if (v->value != NULL) free(v->value);
+	if (v->value != NULL) free_utf8_string(v->value);
 	free(v);
 	free(node);
 }
