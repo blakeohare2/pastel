@@ -13,9 +13,9 @@ int main(int argc, char** argv)
 	ParserContext* parser_context = new_parser_context(0, "python", "en");
 	parser_context->verbose = 0;
 	
-	printf("parsing...\n");
+	if (parser_context->verbose) printf("parsing...\n");
 	List* executables = parse(parser_context, tokens);
-	printf("done parsing.\n");
+	if (parser_context->verbose) printf("done parsing.\n");
 	
 	parser_context_print_error(parser_context);
 	free_node_list(executables);

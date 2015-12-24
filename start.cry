@@ -1,12 +1,4 @@
-function main()
+for (i = 0;;)
 {
-	$print("Hello, World!");
+	j = 0;
 }
-
-//i = 0;
-while (i < 10) {
-	$print(i);
-	i = i + 1;
-}
-
-main();

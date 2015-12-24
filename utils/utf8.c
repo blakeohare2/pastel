@@ -406,12 +406,24 @@ int* string_utf8_copy(int* original)
 int string_utf8_starts_with(int* haystack, char* needle)
 {
 	int length = string_utf8_length(haystack);
-	int i;
-	for (i = 0; i < length && needle[i] != '\0'; ++i)
+	int i = 0;
+	while (1)
 	{
-		if (haystack[i] != needle[i]) return 0;
+		if (i < length)
+		{
+			if (needle[i] == '\0') return 1;
+			
+			if (needle[i] != haystack[i]) return 0;
+		}
+		else
+		{
+			if (needle[i] == '\0') return 1;
+			return 0;
+		}
+		
+		++i;
 	}
-	return 1;
+	return 0; // should not happen.
 }
 
 int string_utf8_contains_char(int* haystack, char needle)

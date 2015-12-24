@@ -34,10 +34,11 @@ ParseNode* parse_for(ParserContext* context, TokenStream* tokens)
 		if (context->failed) { free_node(node); return NULL; }
 	}
 	
-	if (!tokens_is_next_chars(tokens, ";"))
+	if (!tokens_pop_if_present_chars(tokens, ";"))
 	{
 		node_for->condition = parse_expression(context, tokens);
 		if (context->failed) { free_node(node); return NULL; }
+		
 		tokens_pop_expected_chars(context, tokens, ";");
 		if (context->failed) { free_node(node); return NULL; }
 	}
@@ -222,12 +223,14 @@ ParseNode* parse_executable(
 		}
 		else
 		{
+			Token* t = expression->token;
 			int* next = tokens_peek_value(tokens);
 			if (next != NULL)
 			{
 				int assignment_op = parser_context_get_assignment_op_enum(context, next);
 				if (assignment_op != 0)
 				{
+					if (context->verbose) printf("Assignment start. target is %s\n", create_byte_string(expression->token->value));
 					Token* assignment_token = tokens_pop(tokens);
 					ParseNode* assignment_value_expression = parse_expression(context, tokens);
 					if (context->failed)
@@ -240,7 +243,8 @@ ParseNode* parse_executable(
 					{
 						ParseNode* assignment_node = new_node_assignment();
 						NodeAssignment* assignment = (NodeAssignment*) assignment_node->data;
-						assignment_node->token = expression->token;
+						Token* terken = expression->token;
+						assignment_node->token = terken;
 						assignment->target = expression;
 						assignment->value = assignment_value_expression;
 						assignment->op = assignment_op;
@@ -260,6 +264,7 @@ ParseNode* parse_executable(
 				}
 			}
 		}
+		
 		return expression;
 	}
 	
@@ -334,6 +339,7 @@ ParseNode* parse_while_loop(ParserContext* context, TokenStream* tokens)
 	while_loop->code = parse_code_block(context, tokens, 0);
 	if (context->failed) { free_node(node); return NULL; }
 	
+	printf("While end\n");
 	return node;
 }
 
@@ -364,9 +370,17 @@ ParseNode* parse_return(ParserContext* context, TokenStream* tokens)
 List* parse(ParserContext* context, TokenStream* tokens)
 {
 	List* output = new_list();
+	int i = 0;
 	while (tokens_has_more(tokens))
 	{
-		list_add(output, parse_executable(context, tokens, 1 /* root */, 0 /* simple */, 1 /* semicolons required */));
+		if (context->verbose) printf("Parse line #%d\n", ++i);
+		ParseNode* line = parse_executable(
+			context,
+			tokens,
+			1 /* root */,
+			0 /* simple */,
+			1 /* semicolons required */);
+		list_add(output, line);
 		if (context->failed) { free_node_list(output); return NULL; }
 	}
 	

@@ -233,7 +233,10 @@ ParseNode* parse_addition(ParserContext* context, TokenStream* tokens)
 			list_add(binop->expressions, parse_multiplication(context, tokens));
 			if (context->failed) { free_node(node); return NULL; }
 		}
+		expr = node;
 	}
+	
+	return expr;
 }
 
 ParseNode* parse_multiplication(ParserContext* context, TokenStream* tokens)
@@ -250,6 +253,7 @@ ParseNode* parse_multiplication(ParserContext* context, TokenStream* tokens)
 		ParseNode* node = new_node_binary_op();
 		NodeBinaryOp* binop = (NodeBinaryOp*) node->data;
 		list_add(binop->expressions, expr);
+		node->token = expr->token;
 		while (tokens_is_next_chars(tokens, "*") ||
 			tokens_is_next_chars(tokens, "/") ||
 			tokens_is_next_chars(tokens, "%"))
@@ -310,6 +314,7 @@ ParseNode* parse_increment(ParserContext* context, TokenStream* tokens)
 	if (tokens_is_next_chars(tokens, "++") || tokens_is_next_chars(tokens, "--"))
 	{
 		Token* increment_token = tokens_pop(tokens);
+		if (context->verbose) printf(string_utf8_equals_chars(increment_token->value, "++") ? "Prefix increment\n" : "Prefix decrement\n");
 		ParseNode* root = parse_entity(context, tokens);
 		if (context->failed) { free_node(root); return NULL; }
 		
@@ -328,12 +333,13 @@ ParseNode* parse_increment(ParserContext* context, TokenStream* tokens)
 		if (tokens_is_next_chars(tokens, "++") || tokens_is_next_chars(tokens, "--"))
 		{
 			ParseNode* inc_node = new_node_increment();
-			node->token = node->token;
+			inc_node->token = node->token;
 			NodeIncrement* inc = (NodeIncrement*) inc_node->data;
 			inc->expression = node;
 			inc->increment_token = tokens_pop(tokens);
 			inc->is_prefix = 0;
 			node = inc_node;
+			if (context->verbose) printf(string_utf8_equals_chars(inc->increment_token->value, "++") ? "Suffix increment\n" : "Suffix decrement\n");
 		}
 	}
 	return node;
@@ -394,6 +400,7 @@ ParseNode* parse_entity(ParserContext* context, TokenStream* tokens)
 		if (string_utf8_starts_with(next, "0x"))
 		{
 			parser_context_set_error_chars(context, token, "TODO: parse integer constant.");
+			
 		}
 		else if (string_utf8_contains_char(next, '.'))
 		{
@@ -419,15 +426,17 @@ ParseNode* parse_entity(ParserContext* context, TokenStream* tokens)
 			}
 			expr = new_node_integer_constant();
 			NodeIntegerConstant* ic = (NodeIntegerConstant*) expr->data;
+			
 			ic->value = int_value;
 			expr->token = token;
+			if (context->verbose) printf("Integer value: %d\n", int_value);
 		}
 	}
 	else if (c == 'n' && string_utf8_equals_chars(next, "null"))
 	{
 		if (context->verbose) printf("Null\n");
-		
-		parser_context_set_error_chars(context, token, "TODO: null constant.");
+		expr = new_node_null_constant();
+		expr->token = token;
 	}
 	else if (c == 'n' && string_utf8_equals_chars(next, "new"))
 	{
@@ -447,15 +456,17 @@ ParseNode* parse_entity(ParserContext* context, TokenStream* tokens)
 		c == '$' || 
 		c == '_')
 	{
-		if (context->verbose) printf("Word\n");
+		if (context->verbose) printf("Word %s\n", create_byte_string(next));
 		
 		expr = new_node_variable();
-		((NodeVariable*) expr->data)->value = next;
 		expr->token = token;
+		NodeVariable* v = (NodeVariable*) expr->data;
+		v->value = next;
 	}
 	else
 	{
 		parser_context_set_error(context, token, string_concat_cic("Unexpected token: '", next, "'"));
+		return NULL;
 	}
 	
 	if (context->failed) { free_node(expr); return NULL; }
@@ -494,12 +505,14 @@ ParseNode* parse_entity_suffix(ParseNode* root, ParserContext* context, TokenStr
 			if (context->verbose) printf("Dot field\n");
 		
 			parser_context_set_error_chars(context, tokens_peek(tokens), "TODO: dot field.");
+			return NULL;
 		}
 		else if (tokens_is_next_chars(tokens, "["))
 		{
 			if (context->verbose) printf("Bracket index\n");
 		
 			parser_context_set_error_chars(context, tokens_peek(tokens), "TODO: bracket index/key.");
+			return NULL;
 		}
 		else
 		{

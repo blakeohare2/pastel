@@ -71,8 +71,9 @@ ParseNode* new_node_function_call()
 
 ParseNode* new_node_increment()
 {
-	ParseNode* node = new_node_increment(NODE_INCREMENT);
-	NodeIncrement* inc = (NodeIncrement*) node->data;
+	ParseNode* node = new_node_generic(NODE_INCREMENT);
+	NodeIncrement* inc = (NodeIncrement*) malloc(sizeof(NodeIncrement));
+	node->data = inc;
 	inc->expression = NULL;
 	inc->increment_token = NULL;
 	inc->is_prefix = 0;
@@ -116,6 +117,13 @@ ParseNode* new_node_null_coalescer()
 	node->data = nc;
 	nc->primary_expression = NULL;
 	nc->secondary_expression = NULL;
+	return node;
+}
+
+ParseNode* new_node_null_constant()
+{
+	ParseNode* node = new_node_generic(NODE_NULL_CONSTANT);
+	node->data = NULL;
 	return node;
 }
 
