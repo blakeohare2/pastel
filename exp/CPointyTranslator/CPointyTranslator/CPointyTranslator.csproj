@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{47396CD1-B934-4E60-B3FE-AB32D07D9415}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CPointyTranslator</RootNamespace>
+    <AssemblyName>CPointyTranslator</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Exporter.cs" />
+    <Compile Include="ParserException.cs" />
+    <Compile Include="ParseTree\ArrayAllocation.cs" />
+    <Compile Include="ParseTree\AssignmentStatement.cs" />
+    <Compile Include="ParseTree\BinaryOpChain.cs" />
+    <Compile Include="ParseTree\BooleanConstant.cs" />
+    <Compile Include="ParseTree\BracketIndex.cs" />
+    <Compile Include="ParseTree\ConstructorInvocation.cs" />
+    <Compile Include="ParseTree\DotField.cs" />
+    <Compile Include="ParseTree\EnumDeclaration.cs" />
+    <Compile Include="ParseTree\ExecutableParser.cs" />
+    <Compile Include="ParseTree\ExpressionParser.cs" />
+    <Compile Include="ParseTree\FloatConstant.cs" />
+    <Compile Include="ParseTree\ForLoop.cs" />
+    <Compile Include="ParseTree\FunctionDefinition.cs" />
+    <Compile Include="ParseTree\FunctionInvocation.cs" />
+    <Compile Include="ParseTree\IfStatement.cs" />
+    <Compile Include="ParseTree\IncrementNode.cs" />
+    <Compile Include="ParseTree\IntegerConstant.cs" />
+    <Compile Include="ParseTree\NegateNode.cs" />
+    <Compile Include="ParseTree\Node.cs" />
+    <Compile Include="ParseTree\NullConstant.cs" />
+    <Compile Include="ParseTree\Parser.cs" />
+    <Compile Include="ParseTree\PointyType.cs" />
+    <Compile Include="ParseTree\ReturnStatement.cs" />
+    <Compile Include="ParseTree\StringConstant.cs" />
+    <Compile Include="ParseTree\StructDefinition.cs" />
+    <Compile Include="ParseTree\SwitchStatement.cs" />
+    <Compile Include="ParseTree\TernaryNode.cs" />
+    <Compile Include="ParseTree\Variable.cs" />
+    <Compile Include="ParseTree\VariableDeclaration.cs" />
+    <Compile Include="ParseTree\WhileLoop.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Token.cs" />
+    <Compile Include="Tokenizer.cs" />
+    <Compile Include="TokenStream.cs" />
+    <Compile Include="Util.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Templates\headers.c.txt" />
+    <EmbeddedResource Include="Templates\main.c.txt" />
+    <EmbeddedResource Include="Templates\unistring.c.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,6 @@
+﻿
+int unistring_length(int* s)
+{
+	return s[-1];
+}
+
