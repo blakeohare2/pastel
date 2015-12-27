@@ -5,13 +5,13 @@ using System.Text;
 
 namespace CPointyTranslator.ParseTree
 {
-	class EnumDeclaration : Node
+	public class EnumDeclaration : Node
 	{
 		public Dictionary<string, Node> Values { get; set; }
 		public Token NameToken { get; set; }
 
 		public EnumDeclaration(Token enumToken, Token nameToken, IList<Token> names, IList<Node> values)
-			: base(enumToken)
+			: base(NodeType.ENUM_DEFINITION, enumToken)
 		{
 			this.NameToken = nameToken;
 			this.Values = new Dictionary<string, Node>();

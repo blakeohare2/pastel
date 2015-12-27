@@ -10,7 +10,7 @@ namespace CPointyTranslator.ParseTree
 		public Node Expression { get; set; }
 
 		public NegateNode(Token opToken, Node expression)
-			: base(opToken)
+			: base(NodeType.NEGATE, opToken)
 		{
 			this.Expression = expression;
 		}

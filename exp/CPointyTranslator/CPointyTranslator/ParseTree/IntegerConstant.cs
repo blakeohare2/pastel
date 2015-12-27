@@ -10,7 +10,7 @@ namespace CPointyTranslator.ParseTree
 		public int Value { get; set; }
 
 		public IntegerConstant(Token token, int value)
-			: base(token)
+			: base(NodeType.INTEGER_CONSTANT, token)
 		{
 			this.Value = value;
 		}

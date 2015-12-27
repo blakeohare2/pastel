@@ -14,12 +14,13 @@ namespace CPointyTranslator.ParseTree
 		public Node[] Code { get; set; }
 
 		public FunctionDefinition(Token functionToken, PointyType type, Token nameToken, IList<PointyType> argTypes, IList<Token> argNames, IList<Node> code)
-			: base(functionToken)
+			: base(NodeType.FUNCTION_DECLARATION, functionToken)
 		{
 			this.NameToken = nameToken;
 			this.ArgNames = argNames.ToArray();
 			this.ArgTypes = argTypes.ToArray();
 			this.Code = code.ToArray();
+			this.ReturnType = type;
 		}
 	}
 }

@@ -13,7 +13,7 @@ namespace CPointyTranslator.ParseTree
 		public Node ValueExpression { get; set; }
 
 		public AssignmentStatement(Token firstToken, Node targetExpression, Node valueExpression, Token opToken, PointyType nullableTypeDeclaration)
-			: base(firstToken)
+			: base(NodeType.ASSIGNMENT, firstToken)
 		{
 			this.TypeDeclaration = nullableTypeDeclaration;
 			this.TargetExpression = targetExpression;

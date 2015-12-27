@@ -7,13 +7,13 @@ namespace CPointyTranslator.ParseTree
 {
 	class VariableDeclaration : Node
 	{
-		public PointyType Type { get; set; }
+		public PointyType VariableType { get; set; }
 		public Token NameToken { get; set; }
 
 		public VariableDeclaration(Token firstToken, PointyType type, Token name)
-			: base(firstToken)
+			: base(NodeType.VARIABLE_DECLARATION, firstToken)
 		{
-			this.Type = type;
+			this.VariableType = type;
 			this.NameToken = name;
 		}
 	}

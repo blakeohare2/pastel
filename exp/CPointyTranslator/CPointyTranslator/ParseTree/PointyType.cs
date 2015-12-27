@@ -5,7 +5,7 @@ using System.Text;
 
 namespace CPointyTranslator.ParseTree
 {
-	class PointyType
+	public class PointyType
 	{
 		public string Name { get; set; }
 		public Token NameToken { get; set; }

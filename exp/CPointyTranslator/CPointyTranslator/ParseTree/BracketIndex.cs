@@ -12,7 +12,7 @@ namespace CPointyTranslator.ParseTree
 		public Node Index { get; set; }
 
 		public BracketIndex(Node root, Token bracketToken, Node index)
-			: base(root.Token)
+			: base(NodeType.ARRAY_INDEX, root.Token)
 		{
 			this.Root = root;
 			this.BracketToken = bracketToken;

@@ -11,7 +11,7 @@ namespace CPointyTranslator.ParseTree
 		public bool IsChar { get; set; }
 
 		public StringConstant(Token token, bool isChar)
-			: base(token)
+			: base(NodeType.STRING_CONSTANT, token)
 		{
 			this.IsChar = isChar;
 			this.Value = Util.GetStringValueFromStringToken(token);

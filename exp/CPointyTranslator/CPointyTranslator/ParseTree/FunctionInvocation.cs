@@ -12,7 +12,7 @@ namespace CPointyTranslator.ParseTree
 		public Node[] Args { get; set; }
 
 		public FunctionInvocation(Node root, Token parenToken, IList<Node> args)
-			: base(root.Token)
+			: base(NodeType.FUNCTION_INVOCATION, root.Token)
 		{
 			this.Root = root;
 			this.ParenToken = parenToken;

@@ -10,7 +10,7 @@ namespace CPointyTranslator.ParseTree
 		public bool Value { get; set; }
 
 		public BooleanConstant(Token token, bool value)
-			: base(token)
+			: base(NodeType.BOOLEAN_CONSTANT, token)
 		{
 			this.Value = value;
 		}

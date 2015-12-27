@@ -7,12 +7,12 @@ namespace CPointyTranslator.ParseTree
 {
 	class ConstructorInvocation : Node
 	{
-		public PointyType Type { get; set; }
+		public PointyType StructType { get; set; }
 		public Node[] Args { get; set; }
 		public ConstructorInvocation(Token newToken, PointyType type, List<Node> args)
-			: base(newToken)
+			: base(NodeType.CONSTRUCTOR_INVOCATION, newToken)
 		{
-			this.Type = type;
+			this.StructType = type;
 			this.Args = args.ToArray();
 		}
 	}

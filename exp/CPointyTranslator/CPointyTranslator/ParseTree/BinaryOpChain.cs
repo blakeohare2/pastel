@@ -11,7 +11,7 @@ namespace CPointyTranslator.ParseTree
 		public Node[] Expressions { get; set; }
 
 		public BinaryOpChain(List<Node> expressions, List<Token> ops)
-			: base(expressions[0].Token)
+			: base(NodeType.BINARY_OP_CHAIN, expressions[0].Token)
 		{
 			this.Expressions = expressions.ToArray();
 			this.OpTokens = ops.ToArray();

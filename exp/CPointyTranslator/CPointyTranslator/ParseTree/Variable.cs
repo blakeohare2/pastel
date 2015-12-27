@@ -10,7 +10,7 @@ namespace CPointyTranslator.ParseTree
 		public string Name { get; set; }
 
 		public Variable(Token token, string name)
-			: base(token)
+			: base(NodeType.VARIABLE, token)
 		{
 			this.Name = name;
 		}

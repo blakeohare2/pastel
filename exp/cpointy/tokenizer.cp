@@ -5,6 +5,19 @@ enum TokenizerMode {
 	COMMENT,
 }
 
+struct Token {
+	field UniString value;
+	field int line;
+	field int col;
+	field UniString filename;
+}
+
+struct TokenStream {
+	field int current;
+	field int length;
+	field Array<Token> tokens;
+}
+
 function TokenStream tokenize(UniString filename, UniString code) {
 	int length = code.length;
 	Array<int> lines = new int[length + 1];

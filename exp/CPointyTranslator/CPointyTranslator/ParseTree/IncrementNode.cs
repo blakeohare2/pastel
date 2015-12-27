@@ -12,7 +12,7 @@ namespace CPointyTranslator.ParseTree
 		public bool IsPrefix { get; set; }
 
 		public IncrementNode(Token token, Node expression, Token incrementToken, bool isPrefix)
-			: base(token)
+			: base(NodeType.INCREMENT, token)
 		{
 			this.IncrementToken = incrementToken;
 			this.Expression = expression;

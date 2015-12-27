@@ -13,7 +13,7 @@ namespace CPointyTranslator.ParseTree
 		public Node[] Code { get; set; }
 
 		public ForLoop(Token forToken, List<Node> init, Node condition, List<Node> step, List<Node> code)
-			: base(forToken)
+			: base(NodeType.FOR_LOOP, forToken)
 		{
 			this.Init = init.ToArray();
 			this.Condition = condition;

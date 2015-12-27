@@ -43,7 +43,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Context.cs" />
     <Compile Include="Exporter.cs" />
+    <Compile Include="NodeSorter.cs" />
     <Compile Include="ParserException.cs" />
     <Compile Include="ParseTree\ArrayAllocation.cs" />
     <Compile Include="ParseTree\AssignmentStatement.cs" />

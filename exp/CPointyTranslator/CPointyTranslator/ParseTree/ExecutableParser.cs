@@ -115,9 +115,74 @@ namespace CPointyTranslator.ParseTree
 				}
 			}
 
+			// do an initial pass to make sure switch statement is well-formed.
+			bool defaultFound = false;
+			bool caseFound = false;
+			for (int i = 0; i < codeAndCases.Count; ++i)
+			{
+				switch (type[i])
+				{
+					case 0:
+						if (!caseFound && !defaultFound)
+						{
+							throw new ParserException(codeAndCases[0].Token, "Expected case or default");
+						}
+						break;
+					case 1:
+						if (defaultFound)
+						{
+							throw new ParserException(codeAndCases[i].Token, "Cannot have a case after a default.");
+						}
+						caseFound = true;
+						break;
+					default:
+						if (!caseFound)
+						{
+							throw new ParserException(codeAndCases[i].Token, "Cannot have default without cases.");
+						}
+						defaultFound = true;
+						break;
+				}
+			}
 
+			List<Node[]> cases = new List<Node[]>(); // null will represent default
+			List<Node[]> codePerCase = new List<Node[]>();
 
-			return null;
+			List<Node> currentCode = new List<Node>();
+			List<Node> currentCases = new List<Node>();
+
+			for (int i = 0; i < codeAndCases.Count; ++i)
+			{
+				switch (type[i])
+				{
+					case 0:
+						if (currentCases.Count > 0)
+						{
+							cases.Add(currentCases.ToArray());
+							currentCases.Clear();
+						}
+						currentCode.Add(codeAndCases[i]);
+						break;
+					case 1:
+					default:
+						if (currentCode.Count > 0)
+						{
+							codePerCase.Add(currentCode.ToArray());
+							currentCode.Clear();
+						}
+						currentCases.Add(codeAndCases[i]);
+						break;
+				}
+			}
+
+			if (currentCases.Count != 0)
+			{
+				throw new ParserException(switchToken, "Switch statement has empty final case.");
+			}
+
+			codePerCase.Add(currentCode.ToArray());
+
+			return new SwitchStatement(switchToken, expression, cases, codePerCase);
 		}
 
 		public static ReturnStatement ParseReturn(TokenStream tokens)
@@ -286,10 +351,10 @@ namespace CPointyTranslator.ParseTree
 			List<Token> fieldNameTokens = new List<Token>();
 			List<PointyType> types = new List<PointyType>();
 
-			while (tokens.PopIfPresent("}"))
+			while (!tokens.PopIfPresent("}"))
 			{
 				tokens.PopExpected("field");
-				PointyType type = PointyType.Parse(tokens);
+				types.Add(PointyType.Parse(tokens));
 				Token fieldToken = tokens.Pop();
 				Util.VerifyIdentifier(fieldToken);
 				fieldNameTokens.Add(fieldToken);

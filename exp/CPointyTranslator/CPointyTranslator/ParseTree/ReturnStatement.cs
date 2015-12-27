@@ -9,7 +9,7 @@ namespace CPointyTranslator.ParseTree
 	{
 		public Node Expression { get; set; }
 		public ReturnStatement(Token returnToken, Node expression)
-			: base(returnToken)
+			: base(NodeType.RETURN, returnToken)
 		{
 			this.Expression = expression;
 		}

@@ -12,7 +12,7 @@ namespace CPointyTranslator.ParseTree
 		public Token FieldToken { get; set; }
 
 		public DotField(Node root, Token dotToken, Token fieldToken)
-			: base(root.Token)
+			: base(NodeType.DOT_FIELD, root.Token)
 		{
 			this.Root = root;
 			this.DotToken = dotToken;

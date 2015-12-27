@@ -12,7 +12,7 @@ namespace CPointyTranslator.ParseTree
 		public Node FalseCode { get; set; }
 
 		public TernaryNode(Node condition, Node trueCode, Node falseCode)
-			: base(condition.Token)
+			: base(NodeType.TERNARY, condition.Token)
 		{
 			this.Condition = condition;
 			this.TrueCode = trueCode;

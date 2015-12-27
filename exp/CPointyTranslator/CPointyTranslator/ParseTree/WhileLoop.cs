@@ -11,7 +11,7 @@ namespace CPointyTranslator.ParseTree
 		public Node[] Code { get; set; }
 
 		public WhileLoop(Token whileToken, Node condition, List<Node> code)
-			: base(whileToken)
+			: base(NodeType.WHILE_LOOP, whileToken)
 		{
 			this.Condition = condition;
 			this.Code = code.ToArray();

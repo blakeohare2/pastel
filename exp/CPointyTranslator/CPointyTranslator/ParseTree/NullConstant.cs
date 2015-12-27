@@ -7,6 +7,6 @@ namespace CPointyTranslator.ParseTree
 {
 	class NullConstant : Node
 	{
-		public NullConstant(Token token) : base(token) { }
+		public NullConstant(Token token) : base(NodeType.NULL_CONSTANT, token) { }
 	}
 }

@@ -77,9 +77,27 @@ namespace CPointyTranslator
 
 		public static string LoadTextResource(string path)
 		{
-			string[] resources = typeof(Util).Assembly.GetManifestResourceNames();
+			string fullpath = "CPointyTranslator." + path.Replace('/', '.');
+			System.IO.Stream stream = typeof(Util).Assembly.GetManifestResourceStream(fullpath);
 
-			return ":)";
+			List<string> output = new List<string>();
+			while (true)
+			{
+				int byteValue = stream.ReadByte();
+				if (byteValue == -1)
+				{
+					break;
+				}
+				output.Add("" + (char)(byte)byteValue);
+			}
+
+			if (output.Count > 3 && output[0][0] == 239 && output[1][0] == 187 && output[2][0] == 191)
+			{
+				output.RemoveRange(0, 3);
+			}
+
+			string stringValue = string.Join("", output);
+			return stringValue.Replace("\r\n", "\n").Replace('\r', '\n');
 		}
 	}
 }

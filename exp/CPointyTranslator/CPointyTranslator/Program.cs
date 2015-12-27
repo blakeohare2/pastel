@@ -21,6 +21,14 @@ namespace CPointyTranslator
 			}
 
 			List<Node> nodes = ParseTree.Parser.Parse(tokenStreams);
+
+			Dictionary<string, string> output = Exporter.Export(nodes);
+			string outputDirectory = @"C:\Things\Pastel\exp\c";
+			foreach (string file in output.Keys)
+			{
+				string fullPath = System.IO.Path.Combine(outputDirectory, file);
+				System.IO.File.WriteAllText(fullPath, output[file]);
+			}
 		}
 	}
 }

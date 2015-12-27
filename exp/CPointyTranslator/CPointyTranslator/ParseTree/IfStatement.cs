@@ -12,7 +12,7 @@ namespace CPointyTranslator.ParseTree
 		public Node[] FalseCode { get; set; }
 
 		public IfStatement(Token ifToken, Node condition, List<Node> trueCode, List<Node> falseCode)
-			: base(ifToken)
+			: base(NodeType.IF_STATEMENT, ifToken)
 		{
 			this.Condition = condition;
 			this.TrueCode = trueCode.ToArray();
