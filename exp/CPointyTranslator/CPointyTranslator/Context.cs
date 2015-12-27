@@ -10,9 +10,22 @@ namespace CPointyTranslator
 	{
 		private Dictionary<string, string> cpToCType;
 		private Dictionary<string, Dictionary<string, int>> enumValues;
+		private Dictionary<string, List<FunctionDefinition>> functionDefinitionsByName;
+		private Dictionary<string, List<ConstructorDefinition>> constructorDefinitionsByStruct;
+		private Dictionary<string, StructDefinition> structsByName;
+
+		// key 1: struct name.
+		// key 2: method name.
+		// list is all method definitions matching that name. Final matching is done based on parameter matching.
+		private Dictionary<string, Dictionary<string, List<FunctionDefinition>>> methodDefinitionsByStructAndName;
+
+		private List<Dictionary<string, PointyType>> variableDeclarations = new List<Dictionary<string, PointyType>>();
 
 		public int Tab { get; set; }
 		public bool InForLoop { get; set; }
+		public bool NeedsExceptionCheck { get; set; }
+
+		public Node ActiveContext { get; set; }
 
 		private static Dictionary<int, string> tabs = new Dictionary<int, string>();
 		public string Tabs
@@ -35,15 +48,75 @@ namespace CPointyTranslator
 
 		public Context()
 		{
+			this.NeedsExceptionCheck = false;
 			this.InForLoop = false;
+			this.functionDefinitionsByName = new Dictionary<string, List<FunctionDefinition>>();
+			this.constructorDefinitionsByStruct = new Dictionary<string, List<ConstructorDefinition>>();
+			this.methodDefinitionsByStructAndName = new Dictionary<string, Dictionary<string, List<FunctionDefinition>>>();
+			this.structsByName = new Dictionary<string, StructDefinition>();
 			this.cpToCType = new Dictionary<string, string>()
 			{
 				{ "UniString", "int*" },
+				{ "UniChar", "int" },
 				{ "object", "void*" },
 				{ "bool", "int" },
 				{ "int", "int" },
+				{ "List", "List*" },
 			};
 			this.enumValues = new Dictionary<string, Dictionary<string, int>>();
+		}
+
+		public bool IsEnumName(string name)
+		{
+			return this.enumValues.ContainsKey(name);
+		}
+
+		public bool IsEnumMember(string enumName, string itemName)
+		{
+			return this.enumValues[enumName].ContainsKey(itemName);
+		}
+
+		public int GetEnumValue(string enumName, string itemName)
+		{
+			return this.enumValues[enumName][itemName];
+		}
+
+		public void PushVariableScope()
+		{
+			this.variableDeclarations.Add(new Dictionary<string, PointyType>());
+		}
+
+		public void PopVariableScope()
+		{
+			if (this.variableDeclarations.Count == 0) throw new Exception(); // this should not happen.
+			this.variableDeclarations.RemoveAt(this.variableDeclarations.Count - 1);
+		}
+
+		public void DeclareVariableInCurrentScope(Token variableToken, PointyType type)
+		{
+			string name = variableToken.Value;
+			if (this.variableDeclarations.Count == 0) throw new Exception(); // this should not happen.
+			foreach (Dictionary<string, PointyType> lookups in this.variableDeclarations)
+			{
+				if (lookups.ContainsKey(name))
+				{
+					throw new ParserException(variableToken, "The variable '" + name + "' was already declared in this scope or above it.");
+				}
+			}
+			this.variableDeclarations[this.variableDeclarations.Count - 1][name] = type;
+		}
+
+		public PointyType GetVariableType(string name)
+		{
+			PointyType output;
+			for (int i = this.variableDeclarations.Count - 1; i >= 0; --i)
+			{
+				if (this.variableDeclarations[i].TryGetValue(name, out output))
+				{
+					return output;
+				}
+			}
+			return null;
 		}
 
 		public string CifyType(PointyType type)
@@ -70,6 +143,75 @@ namespace CPointyTranslator
 		public void RegisterStruct(StructDefinition structDef)
 		{
 			this.cpToCType.Add(structDef.Name, structDef.Name + "*");
+			if (this.structsByName.ContainsKey(structDef.Name))
+			{
+				throw new ParserException(structDef.Token, "Struct by the same name defined twice.");
+			}
+			this.structsByName[structDef.Name] = structDef;
+		}
+
+		public bool IsStructName(string name)
+		{
+			return this.structsByName.ContainsKey(name);
+		}
+
+		public StructDefinition GetStruct(string name)
+		{
+			return this.structsByName[name];
+		}
+
+		public void RegisterFunction(FunctionDefinition funcDef)
+		{
+			string name = funcDef.NameToken.Value;
+			if (!this.functionDefinitionsByName.ContainsKey(name))
+			{
+				this.functionDefinitionsByName.Add(name, new List<FunctionDefinition>());
+			}
+
+			this.functionDefinitionsByName[name].Add(funcDef);
+		}
+
+		public void RegisterConstructor(ConstructorDefinition constructorDef)
+		{
+			string structName = constructorDef.Parent.Name;
+			if (!this.constructorDefinitionsByStruct.ContainsKey(structName))
+			{
+				this.constructorDefinitionsByStruct[structName] = new List<ConstructorDefinition>() { constructorDef };
+			}
+			else
+			{
+				this.constructorDefinitionsByStruct[structName].Add(constructorDef);
+			}
+		}
+
+		public void RegisterMethod(FunctionDefinition methodDef)
+		{
+			StructDefinition sd = methodDef.Parent;
+			if (sd == null) throw new Exception();
+
+			if (!this.methodDefinitionsByStructAndName.ContainsKey(sd.Name))
+			{
+				this.methodDefinitionsByStructAndName[sd.Name] = new Dictionary<string, List<FunctionDefinition>>();
+			}
+
+			Dictionary<string, List<FunctionDefinition>> lookup = this.methodDefinitionsByStructAndName[sd.Name];
+			string methodName = methodDef.NameToken.Value;
+			if (!lookup.ContainsKey(methodName))
+			{
+				lookup[methodName] = new List<FunctionDefinition>() { methodDef };
+				return;
+			}
+
+			// Is this needed anymore? Isn't this checked during parsing?
+			foreach (FunctionDefinition prevDefs in lookup[methodName])
+			{
+				if (prevDefs.ArgTypeFingerprint == methodDef.ArgTypeFingerprint)
+				{
+					throw new ParserException(methodDef.Token, "Multiple methods with same name and argument types.");
+				}
+			}
+
+			lookup[methodName].Add(methodDef);
 		}
 
 		public void RegsterEnum(EnumDeclaration enumDef)

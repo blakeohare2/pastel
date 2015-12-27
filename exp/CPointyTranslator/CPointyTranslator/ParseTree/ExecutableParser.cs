@@ -28,6 +28,7 @@ namespace CPointyTranslator.ParseTree
 			{
 				switch (next)
 				{
+					case "break": return ParseBreak(tokens);
 					case "for": return ParseFor(tokens);
 					case "while": return ParseWhile(tokens);
 					case "if": return ParseIf(tokens);
@@ -93,7 +94,7 @@ namespace CPointyTranslator.ParseTree
 
 			List<Node> codeAndCases = new List<Node>();
 			List<int> type = new List<int>(); // 0 - executable, 1 - case, 2 - default (value will be null)
-			
+
 			while (!tokens.PopIfPresent("}"))
 			{
 				if (tokens.PopIfPresent("case"))
@@ -207,6 +208,13 @@ namespace CPointyTranslator.ParseTree
 			return new WhileLoop(whileToken, condition, code);
 		}
 
+		public static BreakStatement ParseBreak(TokenStream tokens)
+		{
+			Token breakToken = tokens.PopExpected("break");
+			tokens.PopExpected(";");
+			return new BreakStatement(breakToken);
+		}
+
 		public static ForLoop ParseFor(TokenStream tokens)
 		{
 			Token forToken = tokens.PopExpected("for");
@@ -296,6 +304,7 @@ namespace CPointyTranslator.ParseTree
 			Token functionToken = tokens.PopExpected("function");
 			PointyType type = PointyType.Parse(tokens);
 			Token nameToken = tokens.Pop();
+			if (nameToken.Value == "(") throw new ParserException(functionToken, "You forgot to list the return type.");
 			Util.VerifyIdentifier(nameToken);
 			tokens.PopExpected("(");
 			List<PointyType> argTypes = new List<PointyType>();
@@ -350,18 +359,62 @@ namespace CPointyTranslator.ParseTree
 			tokens.PopExpected("{");
 			List<Token> fieldNameTokens = new List<Token>();
 			List<PointyType> types = new List<PointyType>();
+			List<ConstructorDefinition> constructorDefinitions = new List<ConstructorDefinition>();
+			List<FunctionDefinition> methods = new List<FunctionDefinition>();
 
 			while (!tokens.PopIfPresent("}"))
 			{
-				tokens.PopExpected("field");
-				types.Add(PointyType.Parse(tokens));
-				Token fieldToken = tokens.Pop();
-				Util.VerifyIdentifier(fieldToken);
-				fieldNameTokens.Add(fieldToken);
-				tokens.PopExpected(";");
+				if (tokens.IsNext("field"))
+				{
+					tokens.PopExpected("field");
+					types.Add(PointyType.Parse(tokens));
+					Token fieldToken = tokens.Pop();
+					Util.VerifyIdentifier(fieldToken);
+					fieldNameTokens.Add(fieldToken);
+					tokens.PopExpected(";");
+				}
+				else if (tokens.IsNext("constructor"))
+				{
+					Token constructorToken = tokens.Pop();
+					tokens.PopExpected("(");
+					List<PointyType> argTypes = new List<PointyType>();
+					List<Token> argNames = new List<Token>();
+					while (!tokens.PopIfPresent(")"))
+					{
+						if (argTypes.Count > 0) tokens.PopExpected(",");
+						argTypes.Add(PointyType.Parse(tokens));
+						Token argNameToken = tokens.Pop();
+						Util.VerifyIdentifier(argNameToken);
+						argNames.Add(argNameToken);
+					}
+					List<Node> code = ExecutableParser.ParseBlock(tokens, true);
+					ConstructorDefinition constructorDefinition = new ConstructorDefinition(constructorToken, argTypes, argNames, code);
+					foreach (ConstructorDefinition prevDef in constructorDefinitions)
+					{
+						if (prevDef.ArgFingerprint == constructorDefinition.ArgFingerprint)
+						{
+							throw new ParserException(constructorToken, "Multiple constructors with same argument types.");
+						}
+					}
+					constructorDefinitions.Add(constructorDefinition);
+				}
+				else if (tokens.IsNext("function"))
+				{
+					FunctionDefinition funcDef = ExecutableParser.ParseFunction(tokens);
+					methods.Add(funcDef);
+				}
 			}
 
-			return new StructDefinition(structToken, nameToken.Value, fieldNameTokens, types);
+			StructDefinition structDef = new StructDefinition(structToken, nameToken.Value, fieldNameTokens, types, constructorDefinitions, methods);
+			foreach (ConstructorDefinition constructorDefinition in constructorDefinitions)
+			{
+				constructorDefinition.Parent = structDef;
+			}
+			foreach (FunctionDefinition funcDef in methods)
+			{
+				funcDef.Parent = structDef;
+			}
+			return structDef;
 		}
 	}
 }

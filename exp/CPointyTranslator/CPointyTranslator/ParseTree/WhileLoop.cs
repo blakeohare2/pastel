@@ -16,5 +16,23 @@ namespace CPointyTranslator.ParseTree
 			this.Condition = condition;
 			this.Code = code.ToArray();
 		}
+
+		public override IList<Node> Resolve(Context context)
+		{
+			this.Condition = this.Condition.ResolveExpression(context);
+			this.Code = Node.ResolveCodeChunk(context, this.Code);
+
+			return Listify(this);
+		}
+
+		public override void ResolveType(Context context)
+		{
+			this.Condition.ResolveType(context);
+			if (this.Condition.ReturnType.Name != "bool") throw new ParserException(this.Condition.Token, "While loop condition must be a boolean.");
+			foreach (Node node in this.Code)
+			{
+				node.ResolveType(context);
+			}
+		}
 	}
 }

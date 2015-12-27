@@ -51,7 +51,9 @@
     <Compile Include="ParseTree\AssignmentStatement.cs" />
     <Compile Include="ParseTree\BinaryOpChain.cs" />
     <Compile Include="ParseTree\BooleanConstant.cs" />
-    <Compile Include="ParseTree\BracketIndex.cs" />
+    <Compile Include="ParseTree\ArrayIndex.cs" />
+    <Compile Include="ParseTree\BreakStatement.cs" />
+    <Compile Include="ParseTree\ConstructorDefinition.cs" />
     <Compile Include="ParseTree\ConstructorInvocation.cs" />
     <Compile Include="ParseTree\DotField.cs" />
     <Compile Include="ParseTree\EnumDeclaration.cs" />
@@ -73,6 +75,7 @@
     <Compile Include="ParseTree\StringConstant.cs" />
     <Compile Include="ParseTree\StructDefinition.cs" />
     <Compile Include="ParseTree\SwitchStatement.cs" />
+    <Compile Include="ParseTree\SystemMethodInvocation.cs" />
     <Compile Include="ParseTree\TernaryNode.cs" />
     <Compile Include="ParseTree\Variable.cs" />
     <Compile Include="ParseTree\VariableDeclaration.cs" />

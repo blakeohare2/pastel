@@ -16,5 +16,17 @@ namespace CPointyTranslator.ParseTree
 			this.IsChar = isChar;
 			this.Value = Util.GetStringValueFromStringToken(token);
 		}
+
+		public override IList<Node> Resolve(Context context)
+		{
+			return Listify(this);
+		}
+
+		public override void ResolveType(Context context)
+		{
+			this.ReturnType = this.IsChar
+				? PointyType.UNI_CHAR
+				: PointyType.UNI_STRING;
+		}
 	}
 }

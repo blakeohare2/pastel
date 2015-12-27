@@ -13,5 +13,19 @@ namespace CPointyTranslator.ParseTree
 		{
 			this.Expression = expression;
 		}
+
+		public override IList<Node> Resolve(Context context)
+		{
+			if (this.Expression != null) this.Expression = this.Expression.ResolveExpression(context);
+			return Listify(this);
+		}
+
+		public override void ResolveType(Context context)
+		{
+			if (this.Expression != null)
+			{
+				this.Expression.ResolveType(context);
+			}
+		}
 	}
 }

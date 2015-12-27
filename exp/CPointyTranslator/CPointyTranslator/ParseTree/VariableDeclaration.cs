@@ -16,5 +16,15 @@ namespace CPointyTranslator.ParseTree
 			this.VariableType = type;
 			this.NameToken = name;
 		}
+
+		public override IList<Node> Resolve(Context context)
+		{
+			return Listify(this);
+		}
+
+		public override void ResolveType(Context context)
+		{
+			context.DeclareVariableInCurrentScope(this.NameToken, this.VariableType);
+		}
 	}
 }

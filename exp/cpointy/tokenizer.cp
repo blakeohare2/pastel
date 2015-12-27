@@ -22,6 +22,7 @@ function TokenStream tokenize(UniString filename, UniString code) {
 	int length = code.length;
 	Array<int> lines = new int[length + 1];
 	Array<int> columns = new int[length + 1];
+	List<Token> tokens = new List<Token>();
 	int line = 0;
 	int col = 0;
 	int i;
@@ -40,7 +41,7 @@ function TokenStream tokenize(UniString filename, UniString code) {
 	}
 	
 	StringBuilder token_builder = new StringBuilder();
-	int tokenStart = 0;
+	int token_start = 0;
 	UniChar modeType;
 	int mode = TokenizerMode.NONE;
 	bool handled;
@@ -85,7 +86,7 @@ function TokenStream tokenize(UniString filename, UniString code) {
 							c == '$') {
 							
 							token_start = i;
-							sb.clear();
+							token_builder.clear();
 							mode = TokenizerMode.WORD;
 							--i;
 							handled = true;
@@ -93,7 +94,7 @@ function TokenStream tokenize(UniString filename, UniString code) {
 						break;
 				}
 				if (!handled) {
-					token = new Token();
+					Token token = new Token();
 					token.line = lines[i];
 					token.col = columns[i];
 					token.value = new UniString(c);

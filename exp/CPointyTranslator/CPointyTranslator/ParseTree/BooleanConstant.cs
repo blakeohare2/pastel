@@ -14,5 +14,15 @@ namespace CPointyTranslator.ParseTree
 		{
 			this.Value = value;
 		}
+
+		public override IList<Node> Resolve(Context context)
+		{
+			return Listify(this);
+		}
+
+		public override void ResolveType(Context context)
+		{
+			this.ReturnType = PointyType.BOOLEAN;
+		}
 	}
 }

@@ -5,18 +5,18 @@ using System.Text;
 
 namespace CPointyTranslator.ParseTree
 {
-	class NullConstant : Node
+	class BreakStatement : Node
 	{
-		public NullConstant(Token token) : base(NodeType.NULL_CONSTANT, token) { }
+
+		public BreakStatement(Token breakToken)
+			: base(NodeType.BREAK, breakToken)
+		{ }
 
 		public override IList<Node> Resolve(Context context)
 		{
 			return Listify(this);
 		}
 
-		public override void ResolveType(Context context)
-		{
-			this.ReturnType = PointyType.NULL_POINTER;
-		}
+		public override void ResolveType(Context context) { }
 	}
 }

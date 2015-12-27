@@ -27,5 +27,12 @@ namespace CPointyTranslator.ParseTree
 				this.Values[itemName] = itemValue;
 			}
 		}
+
+		public override IList<Node> Resolve(Context context)
+		{
+			throw new InvalidOperationException("Should have been optimized out.");
+		}
+
+		public override void ResolveType(Context context) { }
 	}
 }

@@ -11,8 +11,10 @@ namespace CPointyTranslator.ParseTree
 		public Dictionary<string, PointyType> TypesByName { get; private set; }
 		public Dictionary<string, Token> FieldTokens { get; private set; }
 		public string[] FieldOrder { get; private set; }
+		public ConstructorDefinition[] Constructors { get; private set; }
+		public FunctionDefinition[] Methods { get; private set; }
 
-		public StructDefinition(Token structToken, string name, List<Token> fieldTokens, List<PointyType> types)
+		public StructDefinition(Token structToken, string name, List<Token> fieldTokens, List<PointyType> types, IList<ConstructorDefinition> constructors, IList<FunctionDefinition> methods)
 			: base(NodeType.STRUCT_DECLARATION, structToken)
 		{
 			Dictionary<string, Token> tokensByName = new Dictionary<string, Token>();
@@ -31,6 +33,15 @@ namespace CPointyTranslator.ParseTree
 			this.FieldTokens = tokensByName;
 			this.FieldOrder = fieldOrder.ToArray();
 			this.Name = name;
+			this.Constructors = constructors.ToArray();
+			this.Methods = methods.ToArray();
 		}
+
+		public override IList<Node> Resolve(Context context)
+		{
+			return Listify(this);
+		}
+
+		public override void ResolveType(Context context) { }
 	}
 }

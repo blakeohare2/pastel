@@ -13,7 +13,7 @@ namespace CPointyTranslator
 		public static List<StructDefinition> SortByTypeDependency(List<StructDefinition> structs, ICollection<EnumDeclaration> enums)
 		{
 			List<StructDefinition> output = new List<StructDefinition>();
-			HashSet<string> resolvedTypes = new HashSet<string>("int object UniString char bool".Split(' '));
+			HashSet<string> resolvedTypes = new HashSet<string>("int object UniString UniChar char bool".Split(' '));
 			Dictionary<string, List<string>> dependencies = new Dictionary<string, List<string>>();
 			foreach (StructDefinition sd in structs)
 			{

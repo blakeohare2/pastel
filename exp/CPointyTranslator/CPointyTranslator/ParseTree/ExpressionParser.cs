@@ -316,7 +316,7 @@ namespace CPointyTranslator.ParseTree
 						Token bracketToken = tokens.Pop();
 						Node index = Parse(tokens);
 						tokens.PopExpected("]");
-						expression = new BracketIndex(expression, bracketToken, index);
+						expression = new ArrayIndex(expression, bracketToken, index);
 						break;
 
 					case ".":
