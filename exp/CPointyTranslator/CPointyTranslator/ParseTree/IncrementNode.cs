@@ -31,6 +31,7 @@ namespace CPointyTranslator.ParseTree
 			if (this.Expression is Variable || this.Expression is ArrayIndex || this.Expression is DotField)
 			{
 				// this is fine.
+				this.ReturnType = PointyType.INTEGER;
 			}
 			else
 			{

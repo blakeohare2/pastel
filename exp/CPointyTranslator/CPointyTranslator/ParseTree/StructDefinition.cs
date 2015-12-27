@@ -39,9 +39,14 @@ namespace CPointyTranslator.ParseTree
 
 		public override IList<Node> Resolve(Context context)
 		{
+			// Resolve is called directly on members from the exporter
+
 			return Listify(this);
 		}
 
-		public override void ResolveType(Context context) { }
+		public override void ResolveType(Context context)
+		{
+			// ResolveType is called directly on members from the exporter
+		}
 	}
 }

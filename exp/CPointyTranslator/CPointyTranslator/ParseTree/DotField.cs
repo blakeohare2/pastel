@@ -62,6 +62,7 @@ namespace CPointyTranslator.ParseTree
 					throw new ParserException(this.Token, "Struct method pointers cannot be passed.");
 
 				case ResolutionHintType.STRUCT_FIELD:
+					this.Root = this.Root.ResolveExpression(context);
 					return Listify(this);
 
 				default:

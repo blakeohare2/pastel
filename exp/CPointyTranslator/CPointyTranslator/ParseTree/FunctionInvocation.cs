@@ -34,7 +34,7 @@ namespace CPointyTranslator.ParseTree
 
 			if (this.StructMethodResolutionHint != null)
 			{
-				this.ContextArg = df.Root;
+				this.ContextArg = df.Root.ResolveExpression(context);
 				this.Root = null;
 			}
 			else if (this.PrimitiveMethodResolutionHint != null)

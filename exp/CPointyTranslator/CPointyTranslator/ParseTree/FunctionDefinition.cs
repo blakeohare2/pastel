@@ -40,6 +40,7 @@ namespace CPointyTranslator.ParseTree
 
 		public override void ResolveType(Context context)
 		{
+			context.ActiveContext = this;
 			context.PushVariableScope();
 			int argLength = this.ArgNames.Length;
 			for (int i = 0; i < argLength; ++i)
@@ -54,6 +55,7 @@ namespace CPointyTranslator.ParseTree
 				node.ResolveType(context);
 			}
 			context.PopVariableScope();
+			context.ActiveContext = null;
 		}
 	}
 }

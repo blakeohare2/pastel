@@ -27,6 +27,11 @@ namespace CPointyTranslator.ParseTree
 
 		public override void ResolveType(Context context)
 		{
+			this.Size.ResolveType(context);
+			if (this.Size.ReturnType.Name != "int")
+			{
+				throw new ParserException(this.Size.Token, "Expected integer. Found '" + this.Size.ReturnType.ToQuickString() + "'");
+			}
 			this.ReturnType = PointyType.NewArrayType(this.ItemType);
 		}
 	}

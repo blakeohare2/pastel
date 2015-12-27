@@ -77,6 +77,7 @@
     <Compile Include="ParseTree\SwitchStatement.cs" />
     <Compile Include="ParseTree\SystemMethodInvocation.cs" />
     <Compile Include="ParseTree\TernaryNode.cs" />
+    <Compile Include="ParseTree\ThisConstant.cs" />
     <Compile Include="ParseTree\Variable.cs" />
     <Compile Include="ParseTree\VariableDeclaration.cs" />
     <Compile Include="ParseTree\WhileLoop.cs" />

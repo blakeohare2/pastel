@@ -9,6 +9,8 @@ namespace CPointyTranslator.ParseTree
 	{
 		public string Name { get; set; }
 
+		private StructDefinition ValueOfThis { get; set; }
+
 		public Variable(Token token, string name)
 			: base(NodeType.VARIABLE, token)
 		{
@@ -17,13 +19,28 @@ namespace CPointyTranslator.ParseTree
 
 		public override IList<Node> Resolve(Context context)
 		{
-			// TODO: lots
+			if (this.ValueOfThis != null)
+			{
+				return Listify(new ThisConstant(this.Token, this.ValueOfThis));
+			}
 
 			return Listify(this);
 		}
 
 		public override void ResolveType(Context context)
 		{
+			if (this.Name == "this")
+			{
+				StructDefinition sd = context.ActiveContextStruct;
+				if (sd == null)
+				{
+					throw new ParserException(this.Token, "Cannot use 'this' outside of a struct method.");
+				}
+				this.ValueOfThis = sd;
+				this.ReturnType = new PointyType() { Name = sd.Name };
+				return;
+			}
+
 			PointyType t = context.GetVariableType(this.Name);
 			if (t == null)
 			{

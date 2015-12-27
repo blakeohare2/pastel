@@ -17,6 +17,8 @@ namespace CPointyTranslator
 			List<EnumDeclaration> enums = new List<EnumDeclaration>();
 			List<FunctionDefinition> functions = new List<FunctionDefinition>();
 			List<StructDefinition> structs = new List<StructDefinition>();
+			List<ConstructorDefinition> constructors = new List<ConstructorDefinition>();
+			List<FunctionDefinition> methods = new List<FunctionDefinition>();
 
 			foreach (Node node in code)
 			{
@@ -37,11 +39,13 @@ namespace CPointyTranslator
 				foreach (ConstructorDefinition cd in sd.Constructors)
 				{
 					context.RegisterConstructor(cd);
+					constructors.Add(cd);
 				}
 
 				foreach (FunctionDefinition fd in sd.Methods)
 				{
 					context.RegisterMethod(fd);
+					methods.Add(fd);
 				}
 			}
 
@@ -55,6 +59,8 @@ namespace CPointyTranslator
 			List<Node> all = new List<Node>();
 			all.AddRange(structs.Cast<Node>());
 			all.AddRange(functions.Cast<Node>());
+			all.AddRange(constructors.Cast<Node>());
+			all.AddRange(methods.Cast<Node>());
 
 			foreach (Node node in all)
 			{
@@ -95,16 +101,82 @@ namespace CPointyTranslator
 		{
 			if (node is FunctionDefinition) ExportFunctionDefinition(context, (FunctionDefinition)node, buffer);
 			else if (node is StructDefinition) ExportStructDefinition(context, (StructDefinition)node, buffer);
+			else if (node is ConstructorDefinition) ExportConstructorDefinition(context, (ConstructorDefinition)node, buffer);
 			else throw new ParserException(node.Token, "I don't have an exporter defined for this syntax yet.");
+		}
+
+		public static void ExportConstructorDefinition(Context context, ConstructorDefinition cd, List<string> buffer)
+		{
+			StructDefinition sd = cd.Parent;
+			buffer.Add(sd.Name);
+			buffer.Add("* CONS_OUTER_");
+			buffer.Add(sd.Name);
+			buffer.Add("(");
+			for (int i = 0; i < cd.ArgNames.Length; ++i)
+			{
+				if (i > 0) buffer.Add(", ");
+				buffer.Add(context.CifyType(cd.ArgTypes[i]));
+				buffer.Add(" ");
+				buffer.Add(cd.ArgNames[i].Value);
+			}
+			buffer.Add(")\n{\t");
+			buffer.Add(sd.Name);
+			buffer.Add("* _this = (");
+			buffer.Add(sd.Name);
+			buffer.Add("*) malloc(sizeof(");
+			buffer.Add(sd.Name);
+			buffer.Add("));\n\tCONS_INNER_");
+			buffer.Add(sd.Name);
+			buffer.Add("(_this");
+			for (int i = 0; i < cd.ArgNames.Length; ++i)
+			{
+				buffer.Add(", ");
+				buffer.Add(cd.ArgNames[i].Value);
+			}
+			buffer.Add(");\n\treturn _this;\n}\n\n");
+
+			buffer.Add("void CONS_INNER_");
+			buffer.Add(sd.Name);
+			buffer.Add("(");
+			buffer.Add(sd.Name);
+			buffer.Add("* _this");
+			for (int i = 0; i < cd.ArgNames.Length; ++i)
+			{
+				buffer.Add(", ");
+				buffer.Add(context.CifyType(cd.ArgTypes[i]));
+				buffer.Add(" ");
+				buffer.Add(cd.ArgNames[i].Value);
+			}
+			buffer.Add(")\n");
+			context.Tab++;
+			ExportExecutables(context, cd.Code, buffer);
+			context.Tab--;
+			buffer.Add("}\n\n");
 		}
 
 		public static void ExportFunctionDefinition(Context context, FunctionDefinition func, List<string> buffer)
 		{
+			StructDefinition methodParent = func.Parent;
+			bool isMethod = methodParent != null;
 			buffer.Add("\n");
 			buffer.Add(context.CifyType(func.FunctionReturnType));
 			buffer.Add(" ");
+			if (isMethod)
+			{
+				buffer.Add("METHOD_" + func.UniqueId + "_");
+			}
+			else
+			{
+				buffer.Add("FUN_");
+			}
 			buffer.Add(func.NameToken.Value);
 			buffer.Add("(");
+			if (isMethod)
+			{
+				buffer.Add(methodParent.Name);
+				buffer.Add("* _this, ");
+			}
+
 			for (int i = 0; i < func.ArgNames.Length; ++i)
 			{
 				if (i > 0) buffer.Add(", ");
@@ -112,7 +184,7 @@ namespace CPointyTranslator
 				buffer.Add(" ");
 				buffer.Add(func.ArgNames[i].Value);
 			}
-			buffer.Add(")\n{");
+			buffer.Add(")\n{\n");
 			context.Tab = 1;
 
 			ExportExecutables(context, func.Code, buffer);
@@ -157,14 +229,21 @@ namespace CPointyTranslator
 				case NodeType.BINARY_OP_CHAIN: ExportBinaryOpChain(context, (BinaryOpChain)node, buffer); return;
 				case NodeType.CONSTRUCTOR_INVOCATION: ExportConstructorInvocation(context, (ConstructorInvocation)node, buffer); return;
 				case NodeType.DOT_FIELD: ExportDotField(context, (DotField)node, buffer); return;
+				case NodeType.INCREMENT: ExportIncrement(context, (IncrementNode)node, buffer); return;
 				case NodeType.INTEGER_CONSTANT: ExportIntegerConstant(context, (IntegerConstant)node, buffer); return;
 				case NodeType.NEGATE: ExportNegate(context, (NegateNode)node, buffer); return;
 				case NodeType.STRING_CONSTANT: ExportStringConstant(context, (StringConstant)node, buffer); return;
 				case NodeType.SYSTEM_METHOD_INVOCATION: ExportSystemMethodInvocation(context, (SystemMethodInvocation)node, buffer); return;
 				case NodeType.TERNARY: ExportTernary(context, (TernaryNode)node, buffer); break;
+				case NodeType.THIS: ExportThis(context, (ThisConstant)node, buffer); break;
 				case NodeType.VARIABLE: ExportVariable(context, (Variable)node, buffer); return;
 				default: throw new ParserException(node.Token, "I don't know what this is.");
 			}
+		}
+
+		public static void ExportThis(Context context, ThisConstant tc, List<string> buffer)
+		{
+			buffer.Add("_this");
 		}
 
 		public static void ExportDotField(Context context, DotField df, List<string> buffer)
@@ -266,9 +345,9 @@ namespace CPointyTranslator
 			buffer.Add("*) allocate_array(");
 			buffer.Add("sizeof(");
 			buffer.Add(ptr);
-			buffer.Add(" * ");
+			buffer.Add(") * ");
 			ExportExpression(context, arrayAlloc.Size, buffer);
-			buffer.Add(")))");
+			buffer.Add("))");
 		}
 
 		public static void ExportVariable(Context context, Variable variable, List<string> buffer)
@@ -306,6 +385,7 @@ namespace CPointyTranslator
 				case NodeType.FOR_LOOP: ExportForLoop(context, (ForLoop)node, buffer); return;
 				case NodeType.IF_STATEMENT: ExportIfStatement(context, (IfStatement)node, buffer); return;
 				case NodeType.SWITCH_STATEMENT: ExportSwitchStatement(context, (SwitchStatement)node, buffer); return;
+				case NodeType.WHILE_LOOP: ExportWhileLoop(context, (WhileLoop)node, buffer); return;
 
 				// These are acceptable as standalone expressions and end in semicolons
 				case NodeType.SYSTEM_METHOD_INVOCATION:
@@ -324,6 +404,20 @@ namespace CPointyTranslator
 			{
 				buffer.Add(";\n");
 			}
+		}
+
+		public static void ExportWhileLoop(Context context, WhileLoop wl, List<string> buffer)
+		{
+			buffer.Add("while (");
+			ExportExpression(context, wl.Condition, buffer);
+			buffer.Add(")\n");
+			buffer.Add(context.Tabs);
+			buffer.Add("{\n");
+			context.Tab++;
+			ExportExecutables(context, wl.Code, buffer);
+			context.Tab--;
+			buffer.Add(context.Tabs);
+			buffer.Add("}\n");
 		}
 
 		public static void ExportFunctionInvocation(Context context, FunctionInvocation fi, List<string> buffer)
@@ -439,14 +533,13 @@ namespace CPointyTranslator
 			context.Tab--;
 			buffer.Add(context.Tabs);
 			buffer.Add("}\n");
-
 		}
 
 		public static void ExportVariableDeclaration(Context context, VariableDeclaration vd, List<string> buffer)
 		{
 			string type = context.CifyType(vd.VariableType);
 			buffer.Add(type);
-			buffer.Add(" ");
+			buffer.Add(" v_");
 			buffer.Add(vd.NameToken.Value);
 			buffer.Add(" = ");
 			switch (type)
@@ -470,7 +563,7 @@ namespace CPointyTranslator
 			if (assignment.TypeDeclaration != null)
 			{
 				buffer.Add(context.CifyType(assignment.TypeDeclaration));
-				buffer.Add(" ");
+				buffer.Add(" v_");
 				buffer.Add(((Variable)assignment.TargetExpression).Name);
 				buffer.Add(" = ");
 				ExportExpression(context, assignment.ValueExpression, buffer);

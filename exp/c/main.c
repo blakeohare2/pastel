@@ -27,17 +27,18 @@ typedef struct TokenStream {
 	Token** tokens;
 } TokenStream;
 
-TokenStream* tokenize(int* filename, int* code)
-{	int length = SM_UniString_length(v_code);
-	int* lines = ((int*) allocate_array(sizeof(int * (v_length + 1))));
-	int* columns = ((int*) allocate_array(sizeof(int * (v_length + 1))));
-	List* tokens = cnstrOUTER_List();
-	int line = 0;
-	int col = 0;
-	int i = 0;
-	int c = 0;
-	int c2 = 0;
-	int c3 = 0;
+TokenStream* FUN_tokenize(int* filename, int* code)
+{
+	int v_length = SM_UniString_length(v_code);
+	int* v_lines = ((int*) allocate_array(sizeof(int) * (v_length + 1)));
+	int* v_columns = ((int*) allocate_array(sizeof(int) * (v_length + 1)));
+	List* v_tokens = cnstrOUTER_List();
+	int v_line = 0;
+	int v_col = 0;
+	int v_i = 0;
+	int v_c = 0;
+	int v_c2 = 0;
+	int v_c3 = 0;
 	for (v_i = 0; (v_i <= v_length); ++v_i)
 	{
 		v_lines[v_i] = v_line;
@@ -52,11 +53,11 @@ TokenStream* tokenize(int* filename, int* code)
 			v_col++;
 		}
 	}
-	StringBuilder* token_builder = cnstrOUTER_StringBuilder();
-	int token_start = 0;
-	int modeType = 0;
-	int mode = 2;
-	int handled = 0;
+	StringBuilder* v_token_builder = cnstrOUTER_StringBuilder();
+	int v_token_start = 0;
+	int v_modeType = 0;
+	int v_mode = 2;
+	int v_handled = 0;
 	for (v_i = 0; (v_i <= v_length); ++v_i)
 	{
 		v_c = (v_i < v_length) ? v_code[v_i] : '\0';
@@ -108,7 +109,7 @@ TokenStream* tokenize(int* filename, int* code)
 				}
 				if (!(v_handled))
 				{
-					Token* token = cnstrOUTER_Token();
+					Token* v_token = cnstrOUTER_Token();
 					v_token->line = v_lines[v_i];
 					v_token->col = v_columns[v_i];
 					v_token->value = cnstrOUTER_UniString(v_c);
@@ -124,6 +125,77 @@ TokenStream* tokenize(int* filename, int* code)
 				break;
 		}
 	}
+}
+StringBuilder* CONS_OUTER_StringBuilder(int capacity)
+{	StringBuilder* _this = (StringBuilder*) malloc(sizeof(StringBuilder));
+	CONS_INNER_StringBuilder(_this, capacity);
+	return _this;
+}
+
+void CONS_INNER_StringBuilder(StringBuilder* _this, int capacity)
+	_this->capacity = v_capacity;
+	_this->size = 0;
+	_this->characters = ((int*) allocate_array(sizeof(int) * _this->capacity));
+}
+
+StringBuilder* CONS_OUTER_StringBuilder()
+{	StringBuilder* _this = (StringBuilder*) malloc(sizeof(StringBuilder));
+	CONS_INNER_StringBuilder(_this);
+	return _this;
+}
+
+void CONS_INNER_StringBuilder(StringBuilder* _this)
+	_this->capacity = 10;
+	_this->size = 0;
+	_this->characters = ((int*) allocate_array(sizeof(int) * _this->capacity));
+}
+
+
+void METHOD_1_ensureCapacity(StringBuilder* _this, int newLength)
+{
+	int v_newCapacity = _this->capacity;
+	while ((v_newCapacity < v_newLength))
+	{
+		v_newCapacity = ((v_newCapacity * 2) + 1);
+	}
+	int* v_newCharacters = ((int*) allocate_array(sizeof(int) * v_newCapacity));
+	int v_i = 0;
+	for (v_i = 0; (v_i < _this->size); ++v_i)
+	{
+		v_newCharacters[v_i] = _this->characters[v_i];
+	}
+	_this->characters = v_newCharacters;
+	_this->capacity = v_newCapacity;
+}
+
+void METHOD_2_append_char(StringBuilder* _this, int c)
+{
+	if ((_this->size == _this->capacity))
+	{
+		method_StringBuilder_ensureCapacity_1(_this, (_this->capacity + 1));
+	}
+	_this->characters[v_this->size++] = v_c;
+}
+
+void METHOD_3_append_string(StringBuilder* _this, int* str)
+{
+	int v_strLength = SM_UniString_length(v_str);
+	int v_newLength = (_this->size + v_strLength);
+	if ((v_newLength > _this->capacity))
+	{
+		method_StringBuilder_ensureCapacity_1(_this, v_newLength);
+	}
+	int v_i = 0;
+	for (v_i = 0; (v_i < v_strLength); ++v_i)
+	{
+		_this->characters[(_this->size + v_i)] = v_str[v_i];
+	}
+	_this->size = v_newLength;
+}
+
+void METHOD_4_clear(StringBuilder* _this, )
+{
+	_this->size = 0;
 }
 
 

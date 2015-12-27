@@ -26,6 +26,18 @@ namespace CPointyTranslator
 		public bool NeedsExceptionCheck { get; set; }
 
 		public Node ActiveContext { get; set; }
+		public StructDefinition ActiveContextStruct
+		{
+			get
+			{
+				if (this.ActiveContext != null)
+				{
+					if (this.ActiveContext is FunctionDefinition) return ((FunctionDefinition)this.ActiveContext).Parent;
+					if (this.ActiveContext is ConstructorDefinition) return ((ConstructorDefinition)this.ActiveContext).Parent;
+				}
+				return null;
+			}
+		}
 
 		private static Dictionary<int, string> tabs = new Dictionary<int, string>();
 		public string Tabs
@@ -56,6 +68,7 @@ namespace CPointyTranslator
 			this.structsByName = new Dictionary<string, StructDefinition>();
 			this.cpToCType = new Dictionary<string, string>()
 			{
+				{ "void", "void" },
 				{ "UniString", "int*" },
 				{ "UniChar", "int" },
 				{ "object", "void*" },
