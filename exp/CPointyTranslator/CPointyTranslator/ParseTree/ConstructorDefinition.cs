@@ -13,9 +13,14 @@ namespace CPointyTranslator.ParseTree
 		public StructDefinition Parent { get; set; }
 		public string ArgFingerprint { get; set; }
 
+		public int UniqueId { get; set; }
+
+		private static int uniqueIdAlloc = 0;
+
 		public ConstructorDefinition(Token constructorToken, IList<PointyType> argTypes, IList<Token> argNames, IList<Node> code)
 			: base(NodeType.CONSTRUCTOR_DECLARATION, constructorToken)
 		{
+			this.UniqueId = ++uniqueIdAlloc;
 			this.ArgTypes = argTypes.ToArray();
 			this.ArgNames = argNames.ToArray();
 			this.Code = code.ToArray();

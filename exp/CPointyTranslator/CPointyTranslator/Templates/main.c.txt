@@ -2,5 +2,20 @@
 
 int main(int argc, char** argv)
 {
-	printf("Hello, World!\n");
+	global_mem_tracker = (MemTracker*) malloc(sizeof(MemTracker));
+	global_mem_tracker->capacity = 1000;
+	global_mem_tracker->size = 0;
+	global_mem_tracker->allocations = NULL;
+
+	initialzie_string_table();
+
+	List* args = new_list(argc);
+	int i;
+	for (i = 0; i < argc; ++i)
+	{
+		list_add(args, unistring_from_char(argv[i]));
+	}
+
+	v_main(args);
+	mem_free_everything();
 }

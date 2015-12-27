@@ -57,7 +57,6 @@ namespace CPointyTranslator
 			structs = NodeSorter.SortByTypeDependency(structs, enums);
 
 			List<Node> all = new List<Node>();
-			all.AddRange(structs.Cast<Node>());
 			all.AddRange(functions.Cast<Node>());
 			all.AddRange(constructors.Cast<Node>());
 			all.AddRange(methods.Cast<Node>());
@@ -77,7 +76,13 @@ namespace CPointyTranslator
 			List<string> mainFileBuffer = new List<string>();
 
 			mainFileBuffer.Add(Util.LoadTextResource("Templates/headers.c.txt"));
+			mainFileBuffer.Add(Util.LoadTextResource("Templates/mem.c.txt"));
+			mainFileBuffer.Add(Util.LoadTextResource("Templates/list.c.txt"));
 			mainFileBuffer.Add(Util.LoadTextResource("Templates/unistring.c.txt"));
+
+			ExportNodes(context, structs.Cast<Node>(), mainFileBuffer);
+
+			ExportPrototypes(context, resolvedNodes, mainFileBuffer);
 
 			ExportNodes(context, resolvedNodes, mainFileBuffer);
 
@@ -89,12 +94,100 @@ namespace CPointyTranslator
 			return output;
 		}
 
-		public static void ExportNodes(Context context, List<Node> nodes, List<string> buffer)
+		public static void ExportPrototypes(Context context, List<Node> nodes, List<string> buffer)
 		{
+			StructDefinition sd;
+			foreach (Node node in nodes)
+			{
+				switch (node.Type)
+				{
+					case NodeType.CONSTRUCTOR_DECLARATION:
+						ConstructorDefinition cd = (ConstructorDefinition)node;
+						sd = cd.Parent;
+						buffer.Add(sd.Name);
+						buffer.Add("* CONS_OUTER_");
+						buffer.Add(cd.UniqueId + "");
+						buffer.Add("_");
+						buffer.Add(sd.Name);
+						buffer.Add("(");
+						for (int i = 0; i < cd.ArgNames.Length; ++i)
+						{
+							if (i > 0) buffer.Add(", ");
+							buffer.Add(context.CifyType(cd.ArgTypes[i]));
+							buffer.Add(" v_");
+							buffer.Add(cd.ArgNames[i].Value);
+						}
+						buffer.Add(");\n");
+
+						buffer.Add("void CONS_INNER_");
+						buffer.Add(cd.UniqueId + "");
+						buffer.Add("_");
+						buffer.Add(sd.Name);
+						buffer.Add("(");
+						buffer.Add(sd.Name);
+						buffer.Add("* _this");
+						for (int i = 0; i < cd.ArgNames.Length; ++i)
+						{
+							buffer.Add(", ");
+							buffer.Add(context.CifyType(cd.ArgTypes[i]));
+							buffer.Add(" v_");
+							buffer.Add(cd.ArgNames[i].Value);
+						}
+						buffer.Add(");\n");
+						break;
+
+					case NodeType.FUNCTION_DECLARATION:
+						FunctionDefinition fd = (FunctionDefinition)node;
+						sd = fd.Parent;
+						buffer.Add(context.CifyType(fd.FunctionReturnType));
+						buffer.Add(" ");
+						if (fd.Parent != null)
+						{
+							buffer.Add("METHOD_");
+						}
+						else
+						{
+							buffer.Add("FUN_");
+						}
+						buffer.Add(fd.UniqueId + "");
+						buffer.Add("_");
+						buffer.Add(fd.NameToken.Value);
+						buffer.Add("(");
+						if (fd.Parent != null)
+						{
+							buffer.Add(sd.Name);
+							buffer.Add("* _this");
+							if (fd.ArgNames.Length > 0) buffer.Add(", ");
+						}
+
+						for (int i = 0; i < fd.ArgNames.Length; ++i)
+						{
+							if (i > 0) buffer.Add(", ");
+							buffer.Add(context.CifyType(fd.ArgTypes[i]));
+							buffer.Add(" v_");
+							buffer.Add(fd.ArgNames[i].Value);
+						}
+						buffer.Add(");\n");
+
+						break;
+
+					case NodeType.STRUCT_DECLARATION:
+						break;
+
+					default:
+						throw new Exception(); // WAT?
+				}
+			}
+		}
+
+		public static void ExportNodes(Context context, IEnumerable<Node> nodes, List<string> buffer)
+		{
+			buffer.Add("\n");
 			foreach (Node node in nodes)
 			{
 				ExportNode(context, node, buffer);
 			}
+			buffer.Add("\n");
 		}
 
 		public static void ExportNode(Context context, Node node, List<string> buffer)
@@ -110,6 +203,8 @@ namespace CPointyTranslator
 			StructDefinition sd = cd.Parent;
 			buffer.Add(sd.Name);
 			buffer.Add("* CONS_OUTER_");
+			buffer.Add(cd.UniqueId + "");
+			buffer.Add("_");
 			buffer.Add(sd.Name);
 			buffer.Add("(");
 			for (int i = 0; i < cd.ArgNames.Length; ++i)
@@ -307,7 +402,9 @@ namespace CPointyTranslator
 
 		public static void ExportConstructorInvocation(Context context, ConstructorInvocation ci, List<string> buffer)
 		{
-			buffer.Add("cnstrOUTER_");
+			buffer.Add("CONS_OUTER_");
+			buffer.Add(ci.ConstructorDefinition.UniqueId + "");
+			buffer.Add("_");
 			buffer.Add(ci.StructType.Name);
 			buffer.Add("(");
 			for (int i = 0; i < ci.Args.Length; ++i)
@@ -345,7 +442,7 @@ namespace CPointyTranslator
 			buffer.Add("*) allocate_array(");
 			buffer.Add("sizeof(");
 			buffer.Add(ptr);
-			buffer.Add(") * ");
+			buffer.Add("), ");
 			ExportExpression(context, arrayAlloc.Size, buffer);
 			buffer.Add("))");
 		}

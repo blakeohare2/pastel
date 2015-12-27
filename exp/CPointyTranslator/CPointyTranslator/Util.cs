@@ -43,7 +43,7 @@ namespace CPointyTranslator
 		{
 			List<string> value = new List<string>();
 			string tokenValue = token.Value;
-			for (int i = 1; i < token.Value.Length; ++i)
+			for (int i = 1; i < token.Value.Length - 1; ++i)
 			{
 				char c = token.Value[i];
 				if (c == '\\')

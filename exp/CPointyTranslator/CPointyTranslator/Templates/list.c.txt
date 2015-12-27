@@ -1,0 +1,18 @@
+﻿typedef struct List {
+	int capacity;
+	int length;
+	int* items;
+} List;
+
+void ensure_capacity(List* list, int newLength)
+{
+	if (newLength > list->capacity)
+	{
+		int* newItems = malloc
+	}
+}
+
+void list_add(void* item)
+{
+
+}

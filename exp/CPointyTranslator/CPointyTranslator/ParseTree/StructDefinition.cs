@@ -17,6 +17,12 @@ namespace CPointyTranslator.ParseTree
 		public StructDefinition(Token structToken, string name, List<Token> fieldTokens, List<PointyType> types, IList<ConstructorDefinition> constructors, IList<FunctionDefinition> methods)
 			: base(NodeType.STRUCT_DECLARATION, structToken)
 		{
+			if (constructors.Count == 0)
+			{
+				constructors = new ConstructorDefinition[] { 
+					new ConstructorDefinition(structToken, new PointyType[0], new Token[0], new Node[0]) { Parent = this } 
+				};
+			}
 			Dictionary<string, Token> tokensByName = new Dictionary<string, Token>();
 			Dictionary<string, PointyType> typesByName = new Dictionary<string, PointyType>();
 			List<string> fieldOrder = new List<string>();

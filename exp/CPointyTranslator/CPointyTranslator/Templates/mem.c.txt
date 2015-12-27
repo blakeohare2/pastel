@@ -1,0 +1,63 @@
+﻿
+typedef struct MemTracker {
+	int** allocations;
+	int length;
+	int capacity;
+} MemTracker;
+
+static MemTracker* global_mem_tracker;
+
+void mem_expand_capacity(MemTracker* mt)
+{
+	int newCapacity = mt->capacity * 2 + 1;
+	int** newAllocations = (int**) malloc(sizeof(int*) * newCapacity);
+	memcpy(newAllocations, mt->allocations, mt->length * sizeof(int*));
+	free(mt->allocations);
+	mt->allocations = newAllocations;
+	mt->capacity = newCapacity;
+}
+
+int* wrapped_malloc(int num_bytes)
+{
+	if (global_mem_tracker->length == global_mem_tracker->capacity) mem_expand_capacity(global_mem_tracker);
+	int* data = malloc(num_bytes + sizeof(int));
+	data[0] = global_mem_tracker->length;
+	global_mem_tracker->allocations[global_mem_tracker->length++] = data;
+	return data + 1;
+}
+
+int* wrapped_free(void* ptr)
+{
+	int* i_ptr = ((int*) ptr) - 1;
+	int index = i_ptr[0];
+	free(i_ptr);
+	global_mem_tracker->length--;
+	if (index != global_mem_tracker->length)
+	{
+		global_mem_tracker->allocations[index] = global_mem_tracker->allocations[global_mem_tracker->length];
+	}
+}
+
+void mem_free_everything()
+{
+	MemTracker* mt = global_mem_tracker;
+	int i;
+	for (i = 0; i < mt->length; ++i)
+	{
+		free(mt->allocations[i]);
+	}
+	free(mt->allocations);
+	free(mt);
+}
+
+int* mem_allocate_array(int member_size, int items)
+{
+	int* output = wrapped_malloc(member_size * items + sizeof(int));
+	output[0] = items;
+	return output + 1;
+}
+
+int array_length(void* array)
+{
+	return ((int*)array)[-1];
+}
