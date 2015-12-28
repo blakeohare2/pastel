@@ -5,7 +5,7 @@ int main(int argc, char** argv)
 	global_mem_tracker = (MemTracker*) malloc(sizeof(MemTracker));
 	global_mem_tracker->capacity = 1000;
 	global_mem_tracker->length = 0;
-	global_mem_tracker->allocations = NULL;
+	global_mem_tracker->allocations = (int**) malloc(sizeof(int*) * global_mem_tracker->capacity);
 
 	List* args = SM_List_new(argc);
 	int i;

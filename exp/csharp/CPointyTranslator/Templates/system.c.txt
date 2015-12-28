@@ -5,9 +5,9 @@
 	char c;
 	for (i = 0; i < length; ++i)
 	{
-		if (c = unistring[i] < 128)
+		if (unistring[i] < 128)
 		{
-			printf("%c", c);
+			printf("%c", (char) unistring[i]);
 		}
 		else
 		{

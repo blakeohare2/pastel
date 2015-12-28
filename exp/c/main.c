@@ -85,9 +85,9 @@ void SM_System_print(int* unistring)
 	char c;
 	for (i = 0; i < length; ++i)
 	{
-		if (c = unistring[i] < 128)
+		if (unistring[i] < 128)
 		{
-			printf("%c", c);
+			printf("%c", (char) unistring[i]);
 		}
 		else
 		{
@@ -166,11 +166,11 @@ int** generate_string_constants()
 	int** output = (int**) wrapped_malloc(sizeof(int*) * 4);
 	int str_0[] = {  };
 	int str_1[] = { 65, 114, 103, 115, 58 };
-	int str_2[] = { 32 };
+	int str_2[] = { 32, 32, 32, 32 };
 	int str_3[] = { 65, 108, 108, 32, 100, 111, 110, 101, 46 };
 	output[0] = mem_inline_array(0, str_0);
 	output[1] = mem_inline_array(5, str_1);
-	output[2] = mem_inline_array(1, str_2);
+	output[2] = mem_inline_array(4, str_2);
 	output[3] = mem_inline_array(9, str_3);
 	return output;
 }
@@ -578,7 +578,7 @@ int main(int argc, char** argv)
 	global_mem_tracker = (MemTracker*) malloc(sizeof(MemTracker));
 	global_mem_tracker->capacity = 1000;
 	global_mem_tracker->length = 0;
-	global_mem_tracker->allocations = NULL;
+	global_mem_tracker->allocations = (int**) malloc(sizeof(int*) * global_mem_tracker->capacity);
 
 	List* args = SM_List_new(argc);
 	int i;
