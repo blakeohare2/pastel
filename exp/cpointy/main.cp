@@ -14,4 +14,7 @@ function void v_main(List<UniString> args) {
 		if ($io_is_dir(files[i])) $print("[DIR] ");
 		$println(files[i]);
 	}
+	
+	UniString main_c_contents = $io_read_all_text("main.c");
+	$println(main_c_contents);
 }

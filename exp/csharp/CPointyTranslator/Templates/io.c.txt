@@ -55,3 +55,43 @@ int SM_IO_is_directory(int* unicode_path)
 	if (S_ISDIR(statbuf.st_mode)) return 1;
 	return 0;
 }
+
+int* SM_IO_read_all_text(int* unicode_path)
+{
+	char* path = create_byte_string(unicode_path);
+	io_correct_path_separator(path, '/', '\\');
+	
+	FILE* fp = fopen(path, "r");
+	int* final_output = NULL;
+	if (fp != NULL)
+	{
+		char buffer[201];
+		char* output = malloc(sizeof(char) * 200);
+		int length = 0;
+		int capacity = 200;
+		while (!feof(fp))
+		{
+			int read_bytes = fread(buffer, sizeof(char), sizeof(char) * 200, fp);
+			if (length + read_bytes > capacity)
+			{
+				int new_capacity = capacity;
+				while (new_capacity < length + read_bytes)
+				{
+					new_capacity = new_capacity * 2 + 1;
+				}
+				char* new_output = (char*) malloc(sizeof(char) * new_capacity);
+				memcpy(new_output, output, length);
+				free(output);
+				output = new_output;
+				capacity = new_capacity;
+			}
+			memcpy(output + length, buffer, sizeof(char) * read_bytes);
+			length += read_bytes;
+		}
+		fclose(fp);
+		final_output = unistring_from_binary_chars(output, length);
+		free(output);
+	}
+	free(path);
+	return final_output;
+}

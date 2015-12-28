@@ -62,6 +62,7 @@ namespace CPointyTranslator.ParseTree
 				{
 					case "io_is_dir(UniString)": realName = "IO.is_directory"; break;
 					case "io_list_dir(UniString)": realName = "IO.list_dir"; break;
+					case "io_read_all_text(UniString)": realName = "IO.read_all_text"; break;
 					case "print(UniString)": realName = "System.print"; break;
 					case "println(UniString)": realName = "System.println"; break;
 					default: throw new Exception(); // forgot to add system method here.
@@ -136,6 +137,7 @@ namespace CPointyTranslator.ParseTree
 				{
 					case "io_is_dir(UniString)":
 					case "io_list_dir(UniString)":
+					case "io_read_all_text(UniString)":
 					case "print(UniString)":
 					case "println(UniString)":
 						this.ReturnType = this.Root.ReturnType;

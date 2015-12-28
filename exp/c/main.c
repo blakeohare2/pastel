@@ -164,7 +164,7 @@ int SM_List_length(List* list)
 
 int** generate_string_constants()
 {
-	int** output = (int**) wrapped_malloc(sizeof(int*) * 8);
+	int** output = (int**) wrapped_malloc(sizeof(int*) * 9);
 	int str_0[] = {  };
 	int str_1[] = { 65, 114, 103, 115, 58 };
 	int str_2[] = { 32, 32, 32, 32 };
@@ -173,6 +173,7 @@ int** generate_string_constants()
 	int str_5[] = { 70, 105, 108, 101, 115, 32, 105, 110, 32, 116, 104, 105, 115, 32, 100, 105, 114, 101, 99, 116, 111, 114, 121, 58 };
 	int str_6[] = { 32, 32, 32, 32, 62, 32 };
 	int str_7[] = { 91, 68, 73, 82, 93, 32 };
+	int str_8[] = { 109, 97, 105, 110, 46, 99 };
 	output[0] = mem_inline_array(0, str_0);
 	output[1] = mem_inline_array(5, str_1);
 	output[2] = mem_inline_array(4, str_2);
@@ -181,6 +182,7 @@ int** generate_string_constants()
 	output[5] = mem_inline_array(24, str_5);
 	output[6] = mem_inline_array(6, str_6);
 	output[7] = mem_inline_array(6, str_7);
+	output[8] = mem_inline_array(6, str_8);
 	return output;
 }
 
@@ -453,6 +455,45 @@ int SM_IO_is_directory(int* unicode_path)
 	return 0;
 }
 
+int* SM_IO_read_all_text(int* unicode_path)
+{
+	char* path = create_byte_string(unicode_path);
+	io_correct_path_separator(path, '/', '\\');
+	
+	FILE* fp = fopen(path, "r");
+	int* final_output = NULL;
+	if (fp != NULL)
+	{
+		char buffer[201];
+		char* output = malloc(sizeof(char) * 200);
+		int length = 0;
+		int capacity = 200;
+		while (!feof(fp))
+		{
+			int read_bytes = fread(buffer, sizeof(char), sizeof(char) * 200, fp);
+			if (length + read_bytes > capacity)
+			{
+				int new_capacity = capacity;
+				while (new_capacity < length + read_bytes)
+				{
+					new_capacity = new_capacity * 2 + 1;
+				}
+				char* new_output = (char*) malloc(sizeof(char) * new_capacity);
+				memcpy(new_output, output, length);
+				free(output);
+				output = new_output;
+				capacity = new_capacity;
+			}
+			memcpy(output + length, buffer, sizeof(char) * read_bytes);
+			length += read_bytes;
+		}
+		fclose(fp);
+		final_output = unistring_from_binary_chars(output, length);
+		free(output);
+	}
+	free(path);
+	return final_output;
+}
 
 typedef struct Token {
 	int* value;
@@ -511,6 +552,8 @@ void v_main(List* v_args)
 		}
 		SM_System_println(SM_List_get(v_files, v_i));
 	}
+	int* v_main_c_contents = SM_IO_read_all_text(get_string_constant(8));
+	SM_System_println(v_main_c_contents);
 }
 
 TokenStream* FUN_6_tokenize(int* v_filename, int* v_code)
