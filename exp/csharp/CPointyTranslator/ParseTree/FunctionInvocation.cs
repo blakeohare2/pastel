@@ -60,9 +60,10 @@ namespace CPointyTranslator.ParseTree
 				string realName;
 				switch (this.SystemMethodHint)
 				{
+					case "io_is_dir(UniString)": realName = "IO.is_directory"; break;
+					case "io_list_dir(UniString)": realName = "IO.list_dir"; break;
 					case "print(UniString)": realName = "System.print"; break;
 					case "println(UniString)": realName = "System.println"; break;
-					case "io_list_dir(UniString)": realName = "IO.list_dir"; break;
 					default: throw new Exception(); // forgot to add system method here.
 				}
 				return Listify(new SystemMethodInvocation(this.Token, realName, this.Args) { ReturnType = this.ReturnType });
@@ -133,6 +134,7 @@ namespace CPointyTranslator.ParseTree
 				string fullSignature = sysMethodName + "(" + string.Join(",", fingerprintBuilder) + ")";
 				switch (fullSignature)
 				{
+					case "io_is_dir(UniString)":
 					case "io_list_dir(UniString)":
 					case "print(UniString)":
 					case "println(UniString)":

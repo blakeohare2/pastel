@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
-
+#include <sys/stat.h>
 
 typedef struct MemTracker {
 	int** allocations;
@@ -164,7 +164,7 @@ int SM_List_length(List* list)
 
 int** generate_string_constants()
 {
-	int** output = (int**) wrapped_malloc(sizeof(int*) * 7);
+	int** output = (int**) wrapped_malloc(sizeof(int*) * 8);
 	int str_0[] = {  };
 	int str_1[] = { 65, 114, 103, 115, 58 };
 	int str_2[] = { 32, 32, 32, 32 };
@@ -172,6 +172,7 @@ int** generate_string_constants()
 	int str_4[] = { 46 };
 	int str_5[] = { 70, 105, 108, 101, 115, 32, 105, 110, 32, 116, 104, 105, 115, 32, 100, 105, 114, 101, 99, 116, 111, 114, 121, 58 };
 	int str_6[] = { 32, 32, 32, 32, 62, 32 };
+	int str_7[] = { 91, 68, 73, 82, 93, 32 };
 	output[0] = mem_inline_array(0, str_0);
 	output[1] = mem_inline_array(5, str_1);
 	output[2] = mem_inline_array(4, str_2);
@@ -179,6 +180,7 @@ int** generate_string_constants()
 	output[4] = mem_inline_array(1, str_4);
 	output[5] = mem_inline_array(24, str_5);
 	output[6] = mem_inline_array(6, str_6);
+	output[7] = mem_inline_array(6, str_7);
 	return output;
 }
 
@@ -440,6 +442,17 @@ List* SM_IO_list_dir(int* unicode_path)
 	return NULL;
 }
 
+int SM_IO_is_directory(int* unicode_path)
+{
+	char* path = create_byte_string(unicode_path);
+	io_correct_path_separator(path, '/', '\\');
+	struct stat statbuf;
+	stat(path, &statbuf);
+	free(path);
+	if (S_ISDIR(statbuf.st_mode)) return 1;
+	return 0;
+}
+
 
 typedef struct Token {
 	int* value;
@@ -492,6 +505,10 @@ void v_main(List* v_args)
 	for (v_i = 0; (v_i < SM_List_length(v_files)); ++v_i)
 	{
 		SM_System_print(get_string_constant(6));
+		if (SM_IO_is_directory(SM_List_get(v_files, v_i)))
+		{
+			SM_System_print(get_string_constant(7));
+		}
 		SM_System_println(SM_List_get(v_files, v_i));
 	}
 }

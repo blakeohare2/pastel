@@ -44,3 +44,14 @@ List* SM_IO_list_dir(int* unicode_path)
 	free(path);
 	return NULL;
 }
+
+int SM_IO_is_directory(int* unicode_path)
+{
+	char* path = create_byte_string(unicode_path);
+	io_correct_path_separator(path, '/', '\\');
+	struct stat statbuf;
+	stat(path, &statbuf);
+	free(path);
+	if (S_ISDIR(statbuf.st_mode)) return 1;
+	return 0;
+}

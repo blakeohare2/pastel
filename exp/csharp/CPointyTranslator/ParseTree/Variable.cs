@@ -57,6 +57,9 @@ namespace CPointyTranslator.ParseTree
 					case "io_list_dir":
 						this.ReturnType = new PointyType() { Name = "List", Generics = new PointyType[] { PointyType.UNI_STRING } };
 						return;
+					case "io_is_dir":
+						this.ReturnType = PointyType.BOOLEAN;
+						return;
 					default:
 						throw new ParserException(this.Token, "Reference to a system function that doesn't exist: " + this.Name);
 				}

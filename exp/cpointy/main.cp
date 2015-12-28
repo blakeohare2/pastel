@@ -11,6 +11,7 @@ function void v_main(List<UniString> args) {
 	$println("Files in this directory:");
 	for (i = 0; i < files.length; ++i) {
 		$print("    > ");
+		if ($io_is_dir(files[i])) $print("[DIR] ");
 		$println(files[i]);
 	}
 }
