@@ -23,6 +23,10 @@ namespace CPointyTranslator.ParseTree
 		{
 			this.Root = this.Root.ResolveExpression(context);
 			this.Index = this.Index.ResolveExpression(context);
+			if (this.Root.ReturnType.Name == "List")
+			{
+				return Listify(new SystemMethodInvocation(this.Token, "List.get", new Node[] { this.Root, this.Index }) { ReturnType = this.ReturnType });
+			}
 			return Listify(this);
 		}
 
@@ -38,6 +42,10 @@ namespace CPointyTranslator.ParseTree
 			else if (this.Root.ReturnType.Name == "UniString")
 			{
 				this.ReturnType = PointyType.UNI_CHAR;
+			}
+			else if (this.Root.ReturnType.Name == "List")
+			{
+				this.ReturnType = this.Root.ReturnType.Generics[0];
 			}
 			else
 			{

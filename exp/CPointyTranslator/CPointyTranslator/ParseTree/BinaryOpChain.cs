@@ -36,6 +36,7 @@ namespace CPointyTranslator.ParseTree
 			}
 
 			PointyType t = this.Expressions[0].ReturnType;
+
 			for (int i = 1; i < this.Expressions.Length; ++i)
 			{
 				t = this.EnsureCorrectType(t, this.OpTokens[i - 1], this.Expressions[i].ReturnType);

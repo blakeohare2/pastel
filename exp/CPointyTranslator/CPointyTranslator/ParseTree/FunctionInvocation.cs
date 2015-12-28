@@ -11,6 +11,7 @@ namespace CPointyTranslator.ParseTree
 		public Token ParenToken { get; set; }
 		public Node[] Args { get; set; }
 		public FunctionDefinition StructMethodResolutionHint { get; set; }
+		public string SystemMethodHint { get; set; }
 		public string PrimitiveMethodResolutionHint { get; set; }
 		public Node ContextArg { get; set; } // target of method invocation
 
@@ -44,9 +45,26 @@ namespace CPointyTranslator.ParseTree
 				switch (this.PrimitiveMethodResolutionHint)
 				{
 					case "List.add(object)":
-						return Listify(new SystemMethodInvocation(this.Token, "List.add", new Node[] { target, this.Args[0] }) { ReturnType = PointyType.VOID });
+						return Listify(new SystemMethodInvocation(
+							this.Token,
+							"List.add",
+							new Node[] { 
+								target, 
+								new Cast(this.Args[0].Token, PointyType.INTEGER, this.Args[0])
+							}) { ReturnType = PointyType.VOID });
 				}
 				throw new ParserException(this.Token, "Unable to resolve primitive method."); // I don't think this should happen, otherwise the primitive method hint shouldn't have been set.
+			}
+			else if (this.SystemMethodHint != null)
+			{
+				string realName;
+				switch (this.SystemMethodHint)
+				{
+					case "print(UniString)": realName = "System.print"; break;
+					case "println(UniString)": realName = "System.println"; break;
+					default: throw new Exception(); // forgot to add system method here.
+				}
+				return Listify(new SystemMethodInvocation(this.Token, realName, this.Args) { ReturnType = this.ReturnType });
 			}
 			else
 			{
@@ -105,6 +123,23 @@ namespace CPointyTranslator.ParseTree
 								break;
 						}
 						throw new ParserException(this.Token, "Method not defined.");
+				}
+			}
+
+			if (this.Root is Variable && ((Variable) this.Root).SystemMethodPointerHint != null)
+			{
+				string sysMethodName = ((Variable)this.Root).SystemMethodPointerHint;
+				string fullSignature = sysMethodName + "(" + string.Join(",", fingerprintBuilder) + ")";
+				switch (fullSignature)
+				{
+					case "print(UniString)":
+					case "println(UniString)":
+						this.ReturnType = this.Root.ReturnType;
+						this.SystemMethodHint = fullSignature;
+						return;
+						
+					default:
+						throw new ParserException(this.Token, "$" + sysMethodName + " does not have any signature that matched these args.");
 				}
 			}
 

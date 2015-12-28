@@ -8,11 +8,51 @@ void ensure_capacity(List* list, int newLength)
 {
 	if (newLength > list->capacity)
 	{
-		int* newItems = malloc
+		int newCapacity = list->capacity;
+		while (newCapacity < newLength)
+		{
+			newCapacity = newCapacity * 2 + 1;
+		}
+
+		int* newItems = wrapped_malloc(sizeof(int) * newCapacity);
+		memcpy(newItems, list->items, sizeof(int) * list->length);
+		wrapped_free(list->items);
+		list->items = newItems;
+		list->capacity = newCapacity;
 	}
 }
 
-void list_add(void* item)
+void SM_List_add(List* list, int item)
 {
+	int length = list->length;
+	if (length == list->capacity)
+	{
+		ensure_capacity(list, length + 1);
+	}
+	list->items[length] = item;
+	list->length++;
+}
 
+List* SM_List_new()
+{
+	List* output = (List*) wrapped_malloc(sizeof(List));
+	output->capacity = 4;
+	output->length = 0;
+	output->items = malloc(sizeof(int) * 4);
+	return output;
+}
+
+void* SM_List_get(List* list, int index)
+{
+	if (index < 0 || index >= list->length)
+	{
+		printf("Array index out of bounds: %d\n", index);
+	}
+
+	return (void*) list->items[index];
+}
+
+int SM_List_length(List* list)
+{
+	return list->length;
 }

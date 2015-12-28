@@ -20,7 +20,7 @@ void mem_expand_capacity(MemTracker* mt)
 int* wrapped_malloc(int num_bytes)
 {
 	if (global_mem_tracker->length == global_mem_tracker->capacity) mem_expand_capacity(global_mem_tracker);
-	int* data = malloc(num_bytes + sizeof(int));
+	int* data = (int*) malloc(num_bytes + sizeof(int));
 	data[0] = global_mem_tracker->length;
 	global_mem_tracker->allocations[global_mem_tracker->length++] = data;
 	return data + 1;
@@ -61,3 +61,16 @@ int array_length(void* array)
 {
 	return ((int*)array)[-1];
 }
+
+int* mem_inline_array(int size, int* values)
+{
+	int* output = wrapped_malloc(sizeof(int) * (size + 1));
+	output[0] = size;
+	int i;
+	for (i = 0; i < size; ++i)
+	{
+		output[i + 1] = values[i];
+	}
+	return output + 1;
+}
+

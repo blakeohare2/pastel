@@ -39,6 +39,9 @@ namespace CPointyTranslator
 			}
 		}
 
+		private Dictionary<string, int> stringConstantsById = new Dictionary<string, int>();
+		private List<string> stringConstants = new List<string>();
+
 		private static Dictionary<int, string> tabs = new Dictionary<int, string>();
 		public string Tabs
 		{
@@ -77,6 +80,23 @@ namespace CPointyTranslator
 				{ "List", "List*" },
 			};
 			this.enumValues = new Dictionary<string, Dictionary<string, int>>();
+			this.RegisterStringConstant("");
+		}
+
+		public int RegisterStringConstant(string value)
+		{
+			if (!this.stringConstantsById.ContainsKey(value))
+			{
+				this.stringConstantsById[value] = this.stringConstants.Count;
+				this.stringConstants.Add(value);
+			}
+
+			return this.stringConstantsById[value];
+		}
+
+		public string[] GetStringConstants()
+		{
+			return this.stringConstants.ToArray();
 		}
 
 		public bool IsEnumName(string name)

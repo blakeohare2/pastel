@@ -4,16 +4,14 @@ int main(int argc, char** argv)
 {
 	global_mem_tracker = (MemTracker*) malloc(sizeof(MemTracker));
 	global_mem_tracker->capacity = 1000;
-	global_mem_tracker->size = 0;
+	global_mem_tracker->length = 0;
 	global_mem_tracker->allocations = NULL;
 
-	initialzie_string_table();
-
-	List* args = new_list(argc);
+	List* args = SM_List_new(argc);
 	int i;
 	for (i = 0; i < argc; ++i)
 	{
-		list_add(args, unistring_from_char(argv[i]));
+		SM_List_add(args, (int) unistring_from_text_chars(argv[i]));
 	}
 
 	v_main(args);

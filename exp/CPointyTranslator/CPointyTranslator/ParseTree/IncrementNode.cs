@@ -21,6 +21,7 @@ namespace CPointyTranslator.ParseTree
 
 		public override IList<Node> Resolve(Context context)
 		{
+			this.Expression = this.Expression.ResolveExpression(context);
 			return Listify(this);
 		}
 

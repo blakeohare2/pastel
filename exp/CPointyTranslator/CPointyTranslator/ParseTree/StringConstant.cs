@@ -9,6 +9,7 @@ namespace CPointyTranslator.ParseTree
 	{
 		public string Value { get; set; }
 		public bool IsChar { get; set; }
+		public int ConstantId { get; set; }
 
 		public StringConstant(Token token, bool isChar)
 			: base(NodeType.STRING_CONSTANT, token)
@@ -19,6 +20,11 @@ namespace CPointyTranslator.ParseTree
 
 		public override IList<Node> Resolve(Context context)
 		{
+			if (!this.IsChar)
+			{
+				this.ConstantId = context.RegisterStringConstant(this.Value);
+			}
+
 			return Listify(this);
 		}
 

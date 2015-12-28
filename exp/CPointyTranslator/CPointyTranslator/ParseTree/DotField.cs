@@ -42,8 +42,11 @@ namespace CPointyTranslator.ParseTree
 					return Listify(ic);
 
 				case ResolutionHintType.PRIMITIVE_FIELD:
-					switch (this.ResolutionHintArg.ToString())
+					string rhint = this.ResolutionHintArg.ToString();
+					switch (rhint)
 					{
+						case "List.length":
+							return Listify(new SystemMethodInvocation(this.Token, "List.length", new Node[] { this.Root }) { ReturnType = PointyType.INTEGER });
 						case "UniString.length":
 							return Listify(new SystemMethodInvocation(this.Token, "UniString.length", new Node[] { this.Root }) { ReturnType = PointyType.INTEGER });
 					}

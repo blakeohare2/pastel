@@ -4,14 +4,9 @@ int is_unicode_bom_present(char* text)
 	return text[0] == (char) 239 && text[1] == (char) 187 && text[2] == (char) 191;
 }
 
-int unistring_length(int* s)
+int SM_UniString_length(int* s)
 {
 	return s[-1];
-}
-
-int* unistring_from_text_chars(char* raw_chars)
-{
-	return unistring_from_binary_chars(raw_chars, strlen(raw_chars));
 }
 
 int* unistring_from_binary_chars(char* binary_data, int length)
@@ -135,10 +130,25 @@ int* unistring_from_binary_chars(char* binary_data, int length)
 	return copied_output + 1;
 }
 
-int* unistring_from_single_char(int c)
+int* unistring_from_text_chars(char* raw_chars)
+{
+	return unistring_from_binary_chars(raw_chars, strlen(raw_chars));
+}
+
+int* SM_UniString_new_from_single_char(int c)
 {
 	int* output = wrapped_malloc(sizeof(int) * 2);
 	output[0] = 1;
 	output[1] = c;
 	return output + 1;
+}
+
+int* get_string_constant(int id)
+{
+	static int** lookup = NULL;
+	if (lookup == NULL)
+	{
+		lookup = generate_string_constants();
+	}
+	return lookup[id];
 }

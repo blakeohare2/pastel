@@ -77,7 +77,11 @@ namespace CPointyTranslator
 
 			mainFileBuffer.Add(Util.LoadTextResource("Templates/headers.c.txt"));
 			mainFileBuffer.Add(Util.LoadTextResource("Templates/mem.c.txt"));
+			mainFileBuffer.Add(Util.LoadTextResource("Templates/system.c.txt"));
 			mainFileBuffer.Add(Util.LoadTextResource("Templates/list.c.txt"));
+
+			ExportStringTable(context, mainFileBuffer);
+
 			mainFileBuffer.Add(Util.LoadTextResource("Templates/unistring.c.txt"));
 
 			ExportNodes(context, structs.Cast<Node>(), mainFileBuffer);
@@ -92,6 +96,35 @@ namespace CPointyTranslator
 			output["main.c"] = string.Join("", mainFileBuffer);
 
 			return output;
+		}
+
+		public static void ExportStringTable(Context context, List<string> buffer)
+		{
+			string[] strings = context.GetStringConstants();
+			buffer.Add(string.Join("\n",
+				"",
+				"int** generate_string_constants()",
+				"{",
+				"\tint** output = (int**) wrapped_malloc(sizeof(int*) * " + strings.Length + ");\n"));
+
+			for (int i = 0; i < strings.Length; ++i)
+			{
+				string str = strings[i];
+				buffer.Add("\tint str_" + i + "[] = { ");
+				for (int j = 0; j < str.Length; ++j)
+				{
+					if (j > 0) buffer.Add(", ");
+					buffer.Add("" + (int)str[j]);
+				}
+				buffer.Add(" };\n");
+			}
+			for (int i = 0; i < strings.Length; ++i)
+			{
+				string str = strings[i];
+				buffer.Add("\toutput[" + i + "] = mem_inline_array(" + str.Length + ", str_" + i + ");\n");
+			}
+
+			buffer.Add("\treturn output;\n}\n");
 		}
 
 		public static void ExportPrototypes(Context context, List<Node> nodes, List<string> buffer)
@@ -144,13 +177,13 @@ namespace CPointyTranslator
 						if (fd.Parent != null)
 						{
 							buffer.Add("METHOD_");
+							buffer.Add(fd.UniqueId + "_");
 						}
-						else
+						else if (fd.NameToken.Value != "v_main")
 						{
 							buffer.Add("FUN_");
+							buffer.Add(fd.UniqueId + "_");
 						}
-						buffer.Add(fd.UniqueId + "");
-						buffer.Add("_");
 						buffer.Add(fd.NameToken.Value);
 						buffer.Add("(");
 						if (fd.Parent != null)
@@ -211,7 +244,7 @@ namespace CPointyTranslator
 			{
 				if (i > 0) buffer.Add(", ");
 				buffer.Add(context.CifyType(cd.ArgTypes[i]));
-				buffer.Add(" ");
+				buffer.Add(" v_");
 				buffer.Add(cd.ArgNames[i].Value);
 			}
 			buffer.Add(")\n{\t");
@@ -221,16 +254,20 @@ namespace CPointyTranslator
 			buffer.Add("*) malloc(sizeof(");
 			buffer.Add(sd.Name);
 			buffer.Add("));\n\tCONS_INNER_");
+			buffer.Add(cd.UniqueId + "");
+			buffer.Add("_");
 			buffer.Add(sd.Name);
 			buffer.Add("(_this");
 			for (int i = 0; i < cd.ArgNames.Length; ++i)
 			{
-				buffer.Add(", ");
+				buffer.Add(", v_");
 				buffer.Add(cd.ArgNames[i].Value);
 			}
 			buffer.Add(");\n\treturn _this;\n}\n\n");
 
 			buffer.Add("void CONS_INNER_");
+			buffer.Add(cd.UniqueId + "");
+			buffer.Add("_");
 			buffer.Add(sd.Name);
 			buffer.Add("(");
 			buffer.Add(sd.Name);
@@ -239,10 +276,10 @@ namespace CPointyTranslator
 			{
 				buffer.Add(", ");
 				buffer.Add(context.CifyType(cd.ArgTypes[i]));
-				buffer.Add(" ");
+				buffer.Add(" v_");
 				buffer.Add(cd.ArgNames[i].Value);
 			}
-			buffer.Add(")\n");
+			buffer.Add(")\n{\n");
 			context.Tab++;
 			ExportExecutables(context, cd.Code, buffer);
 			context.Tab--;
@@ -262,21 +299,28 @@ namespace CPointyTranslator
 			}
 			else
 			{
-				buffer.Add("FUN_");
+				if (func.NameToken.Value != "v_main")
+				{
+					buffer.Add("FUN_" + func.UniqueId + "_");
+				}
 			}
 			buffer.Add(func.NameToken.Value);
 			buffer.Add("(");
 			if (isMethod)
 			{
 				buffer.Add(methodParent.Name);
-				buffer.Add("* _this, ");
+				buffer.Add("* _this");
+				if (func.ArgNames.Length > 0)
+				{
+					buffer.Add(", ");
+				}
 			}
 
 			for (int i = 0; i < func.ArgNames.Length; ++i)
 			{
 				if (i > 0) buffer.Add(", ");
 				buffer.Add(context.CifyType(func.ArgTypes[i]));
-				buffer.Add(" ");
+				buffer.Add(" v_");
 				buffer.Add(func.ArgNames[i].Value);
 			}
 			buffer.Add(")\n{\n");
@@ -322,6 +366,7 @@ namespace CPointyTranslator
 				case NodeType.ARRAY_INDEX: ExportArrayIndex(context, (ArrayIndex)node, buffer); return;
 				case NodeType.BOOLEAN_CONSTANT: ExportBooleanConstant(context, (BooleanConstant)node, buffer); return;
 				case NodeType.BINARY_OP_CHAIN: ExportBinaryOpChain(context, (BinaryOpChain)node, buffer); return;
+				case NodeType.CAST: ExportCast(context, (Cast)node, buffer); return;
 				case NodeType.CONSTRUCTOR_INVOCATION: ExportConstructorInvocation(context, (ConstructorInvocation)node, buffer); return;
 				case NodeType.DOT_FIELD: ExportDotField(context, (DotField)node, buffer); return;
 				case NodeType.INCREMENT: ExportIncrement(context, (IncrementNode)node, buffer); return;
@@ -333,6 +378,23 @@ namespace CPointyTranslator
 				case NodeType.THIS: ExportThis(context, (ThisConstant)node, buffer); break;
 				case NodeType.VARIABLE: ExportVariable(context, (Variable)node, buffer); return;
 				default: throw new ParserException(node.Token, "I don't know what this is.");
+			}
+		}
+
+		public static void ExportCast(Context context, Cast c, List<string> buffer)
+		{
+			if (c.Expression.ReturnType.Equals(c.CastTo))
+			{
+				// redundant cast. Skip.
+				ExportExpression(context, c.Expression, buffer);
+			}
+			else
+			{
+				buffer.Add("((");
+				buffer.Add(context.CifyType(c.CastTo));
+				buffer.Add(")");
+				ExportExpression(context, c.Expression, buffer);
+				buffer.Add(")");
 			}
 		}
 
@@ -396,7 +458,9 @@ namespace CPointyTranslator
 			}
 			else
 			{
-				throw new Exception();
+				buffer.Add("get_string_constant(");
+				buffer.Add(sc.ConstantId + "");
+				buffer.Add(")");
 			}
 		}
 
@@ -439,7 +503,7 @@ namespace CPointyTranslator
 			string ptr = context.CifyType(arrayAlloc.ItemType);
 			buffer.Add("((");
 			buffer.Add(ptr);
-			buffer.Add("*) allocate_array(");
+			buffer.Add("*) mem_allocate_array(");
 			buffer.Add("sizeof(");
 			buffer.Add(ptr);
 			buffer.Add("), ");
@@ -521,12 +585,8 @@ namespace CPointyTranslator
 		{
 			if (fi.ContextArg != null)
 			{
-				buffer.Add("method_");
-				buffer.Add(fi.StructMethodResolutionHint.Parent.Name);
-				buffer.Add("_");
+				buffer.Add("METHOD_" + fi.StructMethodResolutionHint.UniqueId + "_");
 				buffer.Add(fi.StructMethodResolutionHint.NameToken.Value);
-				buffer.Add("_");
-				buffer.Add(fi.StructMethodResolutionHint.UniqueId.ToString());
 				buffer.Add("(");
 				ExportExpression(context, fi.ContextArg, buffer);
 				for (int i = 0; i < fi.Args.Length; ++i)

@@ -10,6 +10,7 @@ namespace CPointyTranslator.ParseTree
 		public string Name { get; set; }
 
 		private StructDefinition ValueOfThis { get; set; }
+		public string SystemMethodPointerHint { get; set; }
 
 		public Variable(Token token, string name)
 			: base(NodeType.VARIABLE, token)
@@ -22,6 +23,10 @@ namespace CPointyTranslator.ParseTree
 			if (this.ValueOfThis != null)
 			{
 				return Listify(new ThisConstant(this.Token, this.ValueOfThis));
+			}
+			else if (this.SystemMethodPointerHint != null)
+			{
+				return Listify(new SystemMethodPointer(this.Token, this.SystemMethodPointerHint, this.ReturnType));
 			}
 
 			return Listify(this);
@@ -39,6 +44,17 @@ namespace CPointyTranslator.ParseTree
 				this.ValueOfThis = sd;
 				this.ReturnType = new PointyType() { Name = sd.Name };
 				return;
+			}
+			else if (this.Name[0] == '$')
+			{
+				this.SystemMethodPointerHint = this.Name.Substring(1);
+				switch (this.SystemMethodPointerHint)
+				{
+					case "print":
+					case "println":
+						this.ReturnType = PointyType.VOID;
+						return;
+				}
 			}
 
 			PointyType t = context.GetVariableType(this.Name);
