@@ -1,0 +1,4 @@
+source src
+output-to ../c
+copydir platforms platforms
+copydir vmsrc vmsrc

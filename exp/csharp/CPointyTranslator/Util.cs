@@ -99,5 +99,72 @@ namespace CPointyTranslator
 			string stringValue = string.Join("", output);
 			return stringValue.Replace("\r\n", "\n").Replace('\r', '\n');
 		}
+
+		public static void WriteAllTextAndEnsureDirectoryExists(string path, string contents)
+		{
+			EnsureDirectoryExists(System.IO.Path.GetDirectoryName(path));
+			System.IO.File.WriteAllText(path, contents);
+		}
+
+		public static void WriteAllBytesAndEnsureDirectoryExists(string path, byte[] bytes)
+		{
+			EnsureDirectoryExists(System.IO.Path.GetDirectoryName(path));
+			System.IO.File.WriteAllBytes(path, bytes);
+		}
+
+		private static void EnsureDirectoryExists(string path)
+		{
+			if (path == null || path.Length == 0 || path == ".") return;
+			if (System.IO.Directory.Exists(path)) return;
+			EnsureDirectoryExists(System.IO.Path.GetDirectoryName(path));
+			System.IO.Directory.CreateDirectory(path);
+		}
+
+		// Returns paths relative to the starting directory.
+		public static string[] GetAllFilesRecursively(string directory)
+		{
+			List<string> output = new List<string>();
+			GetAllFilesRecursivelyImpl(directory, directory, output);
+			return output.ToArray();
+		}
+
+		private static void GetAllFilesRecursivelyImpl(string root, string directory, List<string> output)
+		{
+			foreach (string path in System.IO.Directory.GetDirectories(directory))
+			{
+				GetAllFilesRecursivelyImpl(root, path, output);
+			}
+
+			foreach (string path in System.IO.Directory.GetFiles(directory))
+			{
+				output.Add(path.Substring(root.Length + 1));
+			}
+		}
+		
+		// Absolute paths only
+		public static string PathCombineAndCollapse(params string[] parts)
+		{
+			string[] pieces = System.IO.Path.Combine(parts).Replace('\\', '/').Split('/');
+			List<string> output = new List<string>();
+
+			for (int i = 0; i < pieces.Length; ++i)
+			{
+				string piece = pieces[i];
+				if (piece == "..")
+				{
+					if (output.Count == 0)
+					{
+						return null;
+					}
+					output.RemoveAt(output.Count - 1);
+				}
+				else
+				{
+					output.Add(piece);
+				}
+			}
+
+			return string.Join("\\", output);
+		}
 	}
 }

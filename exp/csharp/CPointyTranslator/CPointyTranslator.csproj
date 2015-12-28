@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CompilerException.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="Exporter.cs" />
     <Compile Include="NodeSorter.cs" />
