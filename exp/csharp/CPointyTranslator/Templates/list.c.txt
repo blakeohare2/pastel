@@ -4,7 +4,7 @@
 	int* items;
 } List;
 
-void ensure_capacity(List* list, int newLength)
+void List_ensure_capacity(List* list, int newLength)
 {
 	if (newLength > list->capacity)
 	{
@@ -27,7 +27,7 @@ void SM_List_add(List* list, int item)
 	int length = list->length;
 	if (length == list->capacity)
 	{
-		ensure_capacity(list, length + 1);
+		List_ensure_capacity(list, length + 1);
 	}
 	list->items[length] = item;
 	list->length++;

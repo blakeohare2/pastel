@@ -102,9 +102,13 @@ function TokenStream tokenize(UniString filename, UniString code) {
 					tokens.add(token);
 				}
 				break;
+				
 			case TokenizerMode.COMMENT:
+				
 			case TokenizerMode.STRING:
+				
 			case TokenizerMode.WORD:
+				
 			default:
 				break;
 		

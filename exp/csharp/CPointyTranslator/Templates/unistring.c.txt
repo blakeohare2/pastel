@@ -152,3 +152,61 @@ int* get_string_constant(int id)
 	}
 	return lookup[id];
 }
+
+char* create_byte_string(int* unicode_string)
+{
+	int utf8_length = unicode_string[-1];
+	char* output = (char*) malloc(sizeof(char) * (utf8_length * 6 + 1));
+	int length = 0;
+	int i = 0;
+	int utf8char;
+	while (i < utf8_length)
+	{
+		utf8char = unicode_string[i++];
+		if (utf8char < 0x80)
+		{
+			output[length++] = (char) utf8char;
+		}
+		else if (utf8char < 0x800)
+		{
+			output[length++] = (char) (0xC0 | (utf8char >> 6));
+			output[length++] = (char) (0x80 | (0x3F & utf8char));
+		}
+		else if (utf8char < 0x10000)
+		{
+			output[length++] = (char) (0xE0 | (utf8char >> 12));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 6)));
+			output[length++] = (char) (0x80 | (0x3f & utf8char));
+		}
+		else if (utf8char < 0x200000)
+		{
+			output[length++] = (char) (0xF0 | (utf8char >> 18));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 12)));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 6)));
+			output[length++] = (char) (0x80 | (0x3f & utf8char));
+		}
+		else if (utf8char <  0x4000000)
+		{
+			output[length++] = (char) (0xF8 | (utf8char >> 24));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 18)));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 12)));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 6)));
+			output[length++] = (char) (0x80 | (0x3f & utf8char));
+		}
+		else
+		{
+			output[length++] = (char) (0xFC | (utf8char >> 30));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 24)));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 18)));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 12)));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 6)));
+			output[length++] = (char) (0x80 | (0x3f & utf8char));
+		}
+	}
+	
+	char* copied_output = (char*) malloc(sizeof(char) * (length + 1));
+	memcpy(copied_output, output, length);
+	free(output);
+	copied_output[length] = '\0';
+	return copied_output;
+}

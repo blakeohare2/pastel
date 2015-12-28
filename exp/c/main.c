@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 
 
 typedef struct MemTracker {
@@ -108,7 +109,7 @@ typedef struct List {
 	int* items;
 } List;
 
-void ensure_capacity(List* list, int newLength)
+void List_ensure_capacity(List* list, int newLength)
 {
 	if (newLength > list->capacity)
 	{
@@ -131,7 +132,7 @@ void SM_List_add(List* list, int item)
 	int length = list->length;
 	if (length == list->capacity)
 	{
-		ensure_capacity(list, length + 1);
+		List_ensure_capacity(list, length + 1);
 	}
 	list->items[length] = item;
 	list->length++;
@@ -163,15 +164,21 @@ int SM_List_length(List* list)
 
 int** generate_string_constants()
 {
-	int** output = (int**) wrapped_malloc(sizeof(int*) * 4);
+	int** output = (int**) wrapped_malloc(sizeof(int*) * 7);
 	int str_0[] = {  };
 	int str_1[] = { 65, 114, 103, 115, 58 };
 	int str_2[] = { 32, 32, 32, 32 };
 	int str_3[] = { 65, 108, 108, 32, 100, 111, 110, 101, 46 };
+	int str_4[] = { 46 };
+	int str_5[] = { 70, 105, 108, 101, 115, 32, 105, 110, 32, 116, 104, 105, 115, 32, 100, 105, 114, 101, 99, 116, 111, 114, 121, 58 };
+	int str_6[] = { 32, 32, 32, 32, 62, 32 };
 	output[0] = mem_inline_array(0, str_0);
 	output[1] = mem_inline_array(5, str_1);
 	output[2] = mem_inline_array(4, str_2);
 	output[3] = mem_inline_array(9, str_3);
+	output[4] = mem_inline_array(1, str_4);
+	output[5] = mem_inline_array(24, str_5);
+	output[6] = mem_inline_array(6, str_6);
 	return output;
 }
 
@@ -329,6 +336,110 @@ int* get_string_constant(int id)
 	return lookup[id];
 }
 
+char* create_byte_string(int* unicode_string)
+{
+	int utf8_length = unicode_string[-1];
+	char* output = (char*) malloc(sizeof(char) * (utf8_length * 6 + 1));
+	int length = 0;
+	int i = 0;
+	int utf8char;
+	while (i < utf8_length)
+	{
+		utf8char = unicode_string[i++];
+		if (utf8char < 0x80)
+		{
+			output[length++] = (char) utf8char;
+		}
+		else if (utf8char < 0x800)
+		{
+			output[length++] = (char) (0xC0 | (utf8char >> 6));
+			output[length++] = (char) (0x80 | (0x3F & utf8char));
+		}
+		else if (utf8char < 0x10000)
+		{
+			output[length++] = (char) (0xE0 | (utf8char >> 12));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 6)));
+			output[length++] = (char) (0x80 | (0x3f & utf8char));
+		}
+		else if (utf8char < 0x200000)
+		{
+			output[length++] = (char) (0xF0 | (utf8char >> 18));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 12)));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 6)));
+			output[length++] = (char) (0x80 | (0x3f & utf8char));
+		}
+		else if (utf8char <  0x4000000)
+		{
+			output[length++] = (char) (0xF8 | (utf8char >> 24));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 18)));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 12)));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 6)));
+			output[length++] = (char) (0x80 | (0x3f & utf8char));
+		}
+		else
+		{
+			output[length++] = (char) (0xFC | (utf8char >> 30));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 24)));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 18)));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 12)));
+			output[length++] = (char) (0x80 | (0x3F & (utf8char >> 6)));
+			output[length++] = (char) (0x80 | (0x3f & utf8char));
+		}
+	}
+	
+	char* copied_output = (char*) malloc(sizeof(char) * (length + 1));
+	memcpy(copied_output, output, length);
+	free(output);
+	copied_output[length] = '\0';
+	return copied_output;
+}
+// These methods are designed to handle any slash-based filepath correctly on any system it may be compiled for.
+// TODO: make the above statement not a blatant lie once I have a linux machine to implement/test that.
+
+// Must only pass in heap strings that were generated in this file.
+// Passing in a const string would be catastrophic.
+// Although that shouldn't be difficult as all methods accept unicode strings which are temporarily converted to heap-based char strings.
+void io_correct_path_separator(char* path, char old_char, char new_char)
+{
+	int i;
+	for (i = 0; path[i] != '\0'; ++i)
+	{
+		if (path[i] == old_char)
+		{
+			path[i] = new_char;
+		}
+	}
+}
+
+List* SM_IO_list_dir(int* unicode_path)
+{
+	char* path = create_byte_string(unicode_path);
+
+	// will have to ifdef/else/endif this and do magic in the make file.
+	io_correct_path_separator(path, '/', '\\');
+
+	DIR* dir;
+	struct dirent* ent;
+	if ((dir = opendir(path)) != NULL)
+	{
+		List* output = SM_List_new();
+		while ((ent = readdir(dir)) != NULL)
+		{
+			char* filename = ent->d_name;
+			if (strcmp(filename, ".") != 0 && strcmp(filename, "..") != 0)
+			{
+				int* filename_unicode = unistring_from_text_chars(filename);
+				SM_List_add(output, (int) filename_unicode);
+			}
+		}
+		closedir(dir);
+		free(path);
+		return output;
+	}
+	free(path);
+	return NULL;
+}
+
 
 typedef struct Token {
 	int* value;
@@ -376,6 +487,13 @@ void v_main(List* v_args)
 		SM_System_println(SM_List_get(v_args, v_i));
 	}
 	SM_System_println(get_string_constant(3));
+	List* v_files = SM_IO_list_dir(get_string_constant(4));
+	SM_System_println(get_string_constant(5));
+	for (v_i = 0; (v_i < SM_List_length(v_files)); ++v_i)
+	{
+		SM_System_print(get_string_constant(6));
+		SM_System_println(SM_List_get(v_files, v_i));
+	}
 }
 
 TokenStream* FUN_6_tokenize(int* v_filename, int* v_code)

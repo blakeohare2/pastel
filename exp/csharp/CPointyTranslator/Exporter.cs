@@ -83,6 +83,7 @@ namespace CPointyTranslator
 			ExportStringTable(context, mainFileBuffer);
 
 			mainFileBuffer.Add(Util.LoadTextResource("Templates/unistring.c.txt"));
+			mainFileBuffer.Add(Util.LoadTextResource("Templates/io.c.txt"));
 
 			ExportNodes(context, structs.Cast<Node>(), mainFileBuffer);
 

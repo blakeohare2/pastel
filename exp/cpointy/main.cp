@@ -7,4 +7,10 @@ function void v_main(List<UniString> args) {
 		$println(args[i]);
 	}
 	$println("All done.");
+	List<UniString> files = $io_list_dir(".");
+	$println("Files in this directory:");
+	for (i = 0; i < files.length; ++i) {
+		$print("    > ");
+		$println(files[i]);
+	}
 }

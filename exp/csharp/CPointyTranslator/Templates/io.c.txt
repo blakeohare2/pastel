@@ -1,0 +1,46 @@
+﻿// These methods are designed to handle any slash-based filepath correctly on any system it may be compiled for.
+// TODO: make the above statement not a blatant lie once I have a linux machine to implement/test that.
+
+// Must only pass in heap strings that were generated in this file.
+// Passing in a const string would be catastrophic.
+// Although that shouldn't be difficult as all methods accept unicode strings which are temporarily converted to heap-based char strings.
+void io_correct_path_separator(char* path, char old_char, char new_char)
+{
+	int i;
+	for (i = 0; path[i] != '\0'; ++i)
+	{
+		if (path[i] == old_char)
+		{
+			path[i] = new_char;
+		}
+	}
+}
+
+List* SM_IO_list_dir(int* unicode_path)
+{
+	char* path = create_byte_string(unicode_path);
+
+	// will have to ifdef/else/endif this and do magic in the make file.
+	io_correct_path_separator(path, '/', '\\');
+
+	DIR* dir;
+	struct dirent* ent;
+	if ((dir = opendir(path)) != NULL)
+	{
+		List* output = SM_List_new();
+		while ((ent = readdir(dir)) != NULL)
+		{
+			char* filename = ent->d_name;
+			if (strcmp(filename, ".") != 0 && strcmp(filename, "..") != 0)
+			{
+				int* filename_unicode = unistring_from_text_chars(filename);
+				SM_List_add(output, (int) filename_unicode);
+			}
+		}
+		closedir(dir);
+		free(path);
+		return output;
+	}
+	free(path);
+	return NULL;
+}
